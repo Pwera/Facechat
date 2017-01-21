@@ -41,6 +41,8 @@ int Facechat::login(std::string email, std::string password)
     if(pos != std::string::npos)
         mRevision = r.text.substr(pos+10, r.text.find(",\"", pos+10) - (pos+10));
 
+    pos = r.text.find("signa", 0);
+    std::cout<<"signature id : " <<pos<<std::endl;
 //    pos = 0;
 //    while((pos = r.text.find("\"_js_", pos + 1)) != std::string::npos)
 //    {
@@ -262,14 +264,32 @@ void Facechat::defaultPayload(std::vector<cpr::Pair>& payloadsPairs)
     payloadsPairs.insert(payloadsPairs.begin(), mDefaultPayloads.begin(), mDefaultPayloads.end());
 }
 
-json Facechat::responseToJson(cpr::Response& response)
-{
+json Facechat::responseToJson(cpr::Response& response) {
     static const std::string toRemove = "for (;;);";
+    std::cout << "response.text: " << response.text << std::endl;
 
-    if(response.text.size() >= toRemove.size())
-        return json::parse(response.text.substr(toRemove.size()));
-
+    if (response.text.size() >= toRemove.size()) {
+        auto k = response.text.substr(toRemove.size());
+        std::cout <<"status_code "<<response.status_code<<" "<<response.error.message<<std::endl;
+        std::cout << "k: " << k << std::endl;
+        return json::parse(k);
+    }
     return json();
+}
+bool Facechat::getUserPosts(std::vector<cpr::Pair> datas){
+//    datas.push_back(cpr::Pair("specific_to_list[1]", "fbid:"+mUserID));
+//    datas.push_back(cpr::Pair("specific_to_list[0]", "fbid:"+std::to_string(sendTo)));
+//    datas.push_back(cpr::Pair("other_user_fbid", std::to_string(sendTo)));
+//    datas.push_back(cpr::Pair("action_type", "ma-type:user-generated-message"));
+//    datas.push_back(cpr::Pair("ephemeral_ttl_mode", "0"));
+//    datas.push_back(cpr::Pair("has_attachment", "false"));
+//    datas.push_back(cpr::Pair("message_id", myNumber));// Zmienia sie
+//    datas.push_back(cpr::Pair("offline_threading_id", myNumber));//jak wyzej
+//    datas.push_back(cpr::Pair("signature_id", "37a6884b")); // zmienia sie
+//    datas.push_back(cpr::Pair("source", "source:chat:web"));
+//    datas.push_back(cpr::Pair("timestamp", "1484847968757")); // czas? 1484847981095
+//    datas.push_back(cpr::Pair("ui_push_phase", "V3"));
+
 }
 
 std::string Facechat::send(const std::vector<cpr::Pair>& data)
@@ -277,55 +297,43 @@ std::string Facechat::send(const std::vector<cpr::Pair>& data)
     std::vector<cpr::Pair> payloadsPairs;
     defaultPayload(payloadsPairs);
 
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][action_type]", "ma-type:user-generated-message"));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][author]", "fbid:"+mUserID));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][source]", "source:chat:web"));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][source_tags][0]", "source:chat"));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][ui_push_phase]", "V3"));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][status]", "0"));
-
-//    std::string threadingID = Facechat::generateOfflineThreadingID();
-//    std::string threadingID = "6150007224881098906";
-    std::string threadingID = "";
-//    payloadsPairs.push_back(cpr::Pair("message_batch[0][message_id]", threadingID));
-//    payloadsPairs.push_back(cpr::Pair("message_batch[0][offline_threading_id]", threadingID));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][thread_id]", threadingID));
-
-
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][timestamp]", std::to_string(time(NULL))));
-
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][has_attachment]", false));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][timestamp_time_passed]", 0));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][is_unread]", false));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][is_forward]", false));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][is_filtered_content]", false));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][is_filtered_content_bh]", false));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][is_filtered_content_account]", false));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][is_filtered_content_quasar]", false));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][is_filtered_content_invalid_app]", false));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][is_spoof_warning]", false));
+    payloadsPairs.push_back(cpr::Pair("__af", "i0"));
+    payloadsPairs.push_back(cpr::Pair("__be", "-1"));
+    payloadsPairs.push_back(cpr::Pair("__dyn", "aihoFeyfyGmagngDxyG8EiolzkqbxqbAKGiBAy8Z9LFwxBxC9V8CdwIhE98nwgUaqwHUR7yUJi28y4EnFeex3BKuEjKewzWxaFQ12VVojxCVEiHWCDxi5-uifz8lUlwkEG9J7By8K48hxGbwBxq69LZ1uJ12VovGi5qh98FoKEWdxyayoO9GVtqgmx2ii49um"));
+    payloadsPairs.push_back(cpr::Pair("__pc", "PHASED:DEFAULT"));
 
     payloadsPairs.insert(payloadsPairs.end(), data.begin(), data.end());
-
     mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
     mPostSession.SetUrl(cpr::Url {send_message_url});
-////    mPostSession.SetUrl(cpr::Url {test_url});
     cpr::Response r = mPostSession.Post();
-    if(responseToJson(r)["payload"]["actions"][0]["message_id"].is_string())
-        return responseToJson(r)["payload"]["actions"][0]["message_id"];
+
+    auto response =responseToJson(r)["payload"]["actions"][0]["message_id"];
+    std::cout<< response;
+    if(response.is_string())
+        return response;
     else
         return "";
 }
 
 std::string Facechat::sendMessage(std::string message, UniversalID sendTo, bool isGroup, std::vector<cpr::Pair> datas)
 {
-    datas.emplace_back("message_batch[0][body]", message);
+    datas.emplace_back("body", message);
 
     if(!isGroup)
     {
-        datas.push_back(cpr::Pair("message_batch[0][specific_to_list][1]", "fbid:"+mUserID));
-        datas.push_back(cpr::Pair("message_batch[0][specific_to_list][0]", "fbid:"+std::to_string(sendTo)));
-        datas.push_back(cpr::Pair("message_batch[0][other_user_fbid]", std::to_string(sendTo)));
+        auto myNumber = generateMessageID();
+        datas.push_back(cpr::Pair("specific_to_list[1]", "fbid:"+mUserID));
+        datas.push_back(cpr::Pair("specific_to_list[0]", "fbid:"+std::to_string(sendTo)));
+        datas.push_back(cpr::Pair("other_user_fbid", std::to_string(sendTo)));
+        datas.push_back(cpr::Pair("action_type", "ma-type:user-generated-message"));
+        datas.push_back(cpr::Pair("ephemeral_ttl_mode", "0"));
+        datas.push_back(cpr::Pair("has_attachment", "false"));
+        datas.push_back(cpr::Pair("message_id", myNumber));// Zmienia sie
+        datas.push_back(cpr::Pair("offline_threading_id", myNumber));//jak wyzej
+        datas.push_back(cpr::Pair("signature_id", "37a6884b")); // zmienia sie
+        datas.push_back(cpr::Pair("source", "source:chat:web"));
+        datas.push_back(cpr::Pair("timestamp", "1484847968757")); // czas? 1484847981095
+        datas.push_back(cpr::Pair("ui_push_phase", "V3"));
     }
     else
         datas.push_back(cpr::Pair("message_batch[0][thread_fbid]", std::to_string(sendTo)));
@@ -650,8 +658,8 @@ std::vector<std::pair<UserID, time_t>> Facechat::getOnlineFriend(bool includeMob
     mPostSession.SetUrl(cpr::Url {get_online_friends_url});
     cpr::Response r = mPostSession.Post();
     std::cout << r.text << std::endl;
-    for(auto& c : r.cookies.map_)
-        std::cout << c.first << ": " << c.second << std::endl;
+//    for(auto& c : r.cookies.map_)
+//        std::cout << c.first << ": " << c.second << std::endl;
     json j = responseToJson(r)["payload"]["buddy_list"];
 
     std::vector<std::pair<UserID, time_t>> onlines;

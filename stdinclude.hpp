@@ -1,7 +1,7 @@
 #pragma once
 
-#include "extlib/cpr/include/cpr.h"
-#include "extlib/cpr/include/util.h"
+#include <cpr/cpr.h>
+#include <cpr/util.h>
 
 #include <iostream>
 #include <map>
@@ -23,7 +23,7 @@
 
 using namespace nlohmann;
 
-#include "extlib/cpr/include/session.h"
+#include <cpr/session.h>
 
 #include <algorithm>
 #include <functional>
@@ -31,8 +31,8 @@ using namespace nlohmann;
 
 #include <curl/curl.h>
 
-#include "extlib/cpr/include/curlholder.h"
-#include "extlib/cpr/include/util.h"
+#include <cpr/curlholder.h>
+#include <cpr/util.h>
 
 namespace cpr {
 

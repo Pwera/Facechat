@@ -2,7 +2,7 @@
 #define FACECHAT_H
 
 #include "stdinclude.hpp"
-
+#include <bitset>
 typedef long long int UserID;
 typedef long long int ThreadID;
 typedef long long int UniversalID;
@@ -11,13 +11,17 @@ class Facechat
 {
 
 public:
-
+   bool  getUserPosts(std::vector<cpr::Pair> datas);
+    std::string mUserID;
+    std::string mDTSG;
+    std::string mRevision;
     struct Thread
     {
         std::vector<UserID> pastParticipant;
         std::vector<UserID> participants;
 
         std::string name;
+
 
         int messageCount;
 
@@ -186,6 +190,30 @@ public:
     int login(std::string email, std::string password);
     void logout();
 
+    std::string generateMessageID(){
+        std::string toReturn= std::bitset<22>(0).to_string();
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<> dis(0, 1);
+        double random = dis(gen);
+        random*= 2001172244;
+        toReturn+=std::bitset<32>(random).to_string();
+        auto now = std::chrono::system_clock::now();
+        time_t tt = (((std::chrono::system_clock::to_time_t(now))+1)*1000)+453;
+        std::string binaryTime = std::bitset<45>(tt).to_string();
+        for(int i=0;i<30;i++){
+            if(binaryTime[0]=='0'){
+                binaryTime=binaryTime.substr(1);
+            }
+            else break;
+        }
+        toReturn=binaryTime+toReturn.substr(32);
+        unsigned long long MsgID = std::stoull(toReturn, nullptr, 2);
+        toReturn = std::to_string(MsgID);
+        return toReturn;
+    }
+
+    std::string like(std::string message, UniversalID sendTo, UserID userID);
     std::string sendMessage(std::string message, UniversalID sendTo, bool isGroup = false, std::vector<cpr::Pair> datas = {{}});
     std::string sendAttachement(std::string message, std::string filePath, UniversalID sendTo, bool isGroup = false);
     std::string sendUrl(std::string message, std::string url, UniversalID sendTo, bool isGroup = false);
@@ -247,16 +275,16 @@ private:
     cpr::Cookies mDefaultCookie;
     std::vector<cpr::Pair> mDefaultPayloads;
 
-    std::string mUserID;
-    std::string mDTSG;
-    std::string mRevision;
+    std::string __user;
+    std::string fb_dtsg;
+    std::string __rev;
     std::string mSticky;
     std::string mPool;
 
     std::string seq = "0";
 
-//    const std::string user_agent = "Mozilla/5.0 (Windows NT 5.1; rv:31.0) Gecko/20100101 Firefox/31.0";
-    const std::string user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/601.1.10 (KHTML, like Gecko) Version/8.0.5 Safari/601.1.10";
+    const std::string user_agent = "Mozilla/5.0 (Windows NT 6.1; rv:50.0) Gecko/20100101 Firefox/50.0";
+ //   const std::string user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/601.1.10 (KHTML, like Gecko) Version/8.0.5 Safari/601.1.10";
 
     const std::string test_url = "https://www.httpbin.org/post";
 
@@ -273,12 +301,13 @@ private:
     const std::string list_thread_url = "https://www.facebook.com/ajax/mercury/threadlist_info.php";
     const std::string delete_thread_url = "https://www.facebook.com/ajax/mercury/delete_thread.php";
     const std::string delete_message_url = "https://www.facebook.com/ajax/mercury/delete_messages.php";
-    const std::string send_message_url = "https://www.facebook.com/ajax/mercury/send_messages.php";
+    const std::string send_message_url = "https://www.facebook.com/messaging/send/?dpr=1";
     const std::string set_read_status_url = "https://www.facebook.com/ajax/mercury/change_read_status.php";
     const std::string set_typing_status_url = "https://www.facebook.com/ajax/messaging/typ.php";
     const std::string remove_user_from_group_url = "https://www.facebook.com/chat/remove_participants";
     const std::string pull_message_url = "https://0-edge-chat.facebook.com/pull?channel=p_$USER_ID&partition=-2&clientid=3396bf29&cb=gr6l&idle=0&cap=8&msgs_recv=0&uid=$USER_ID&viewer_uid=$USER_ID&state=active&seq=$SEQ&sticky_token=$STICKY&sticky_pool=$POOL";
     const std::string sticky_url = "https://0-edge-chat.facebook.com/pull?channel=p_$USER_ID&partition=-2&clientid=3396bf29&cb=gr6l&idle=0&cap=8&msgs_recv=0&uid=$USER_ID&viewer_uid=$USER_ID&state=active&seq=0";
+    const std::string like_url ="https://www.facebook.com/ufi/reaction/?dpr=1";
 };
 
 #endif // FACECHAT_H
