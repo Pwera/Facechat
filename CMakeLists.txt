@@ -19,7 +19,7 @@ set(FACECHAT_INCLUDE
         json/json.hpp
         )
 
-add_library(${PROJECT_NAME} STATIC ${FACECHAT_SOURCE} ${FACECHAT_INCLUDE})
+add_library(${PROJECT_NAME} SHARED ${FACECHAT_SOURCE} ${FACECHAT_INCLUDE})
 
 find_package(Threads REQUIRED)
 if(THREADS_HAVE_PTHREAD_ARG)
