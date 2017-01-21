@@ -2,6 +2,7 @@
 #define FACECHAT_H
 
 #include "stdinclude.hpp"
+#include "FacechatHelper.hpp"
 #include <bitset>
 typedef long long int UserID;
 typedef long long int ThreadID;
@@ -186,6 +187,7 @@ public:
 
     Facechat();
     virtual ~Facechat();
+    FacechatHelper helper;
 
     int login(std::string email, std::string password);
     void logout();
