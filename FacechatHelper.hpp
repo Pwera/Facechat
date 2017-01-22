@@ -58,9 +58,18 @@ public:
         payloadsPairs.push_back(cpr::Pair("message_batch[0][manual_retry_cnt]", "0"));
         payloadsPairs.push_back(cpr::Pair("message_batch[0][threading_id]", ""));
     }
+    void loadMorePosts(std::vector<cpr::Pair> &payloadsPairs, std::string mUserID){
+        payloadsPairs.push_back(cpr::Pair("page_id" ,mUserID));
+        payloadsPairs.push_back(cpr::Pair("surface","www_pages_home"));
+        payloadsPairs.push_back(cpr::Pair("unit_count", "8"));
+    }
+
     void logJson(cpr::Response& r, std::string message= "", bool toFile=false){
         std::cout<<"------------------------------------------------------\n";
-        std::cout<<message<< " statusCode: "<<r.status_code << " " << " error: "<<r.error.message<<" text: "<<r.text<<std::endl;
+        std::cout<<message<< " statusCode: "<<r.status_code << " " << " error: "<<r.error.message
+                 <<
+                 (toFile ?  r.text  : "" ) << std::endl;
+
         std::cout<<"------------------------------------------------------end of "<<message << "\n";
         std::ofstream write;
         write.open(message.append(".txt"));

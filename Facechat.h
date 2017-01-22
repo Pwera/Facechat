@@ -214,7 +214,7 @@ public:
         toReturn = std::to_string(MsgID);
         return toReturn;
     }
-    std::string grephApi();
+    void searchForUserPosts(bool);
     std::string like(std::string message, UniversalID sendTo, UserID userID);
     std::string sendMessage(std::string message, UniversalID sendTo, bool isGroup = false, std::vector<cpr::Pair> datas = {{}});
     std::string sendAttachement(std::string message, std::string filePath, UniversalID sendTo, bool isGroup = false);

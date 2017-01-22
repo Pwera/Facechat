@@ -224,9 +224,7 @@ json Facechat::responseToJson(cpr::Response& response) {
     }
     return json();
 }
-bool Facechat::getUserPosts(std::vector<cpr::Pair> datas){
 
-}
 
 std::string Facechat::send(const std::vector<cpr::Pair>& data)
 {
@@ -870,7 +868,7 @@ Facechat::Thread Facechat::parseThread(json& j) {
     return thread;
 }
 
-std::string Facechat::grephApi(){
+void Facechat::searchForUserPosts(bool extended){
     std::vector<cpr::Pair> payloadsPairs;
     defaultPayload(payloadsPairs);
     mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
@@ -879,18 +877,45 @@ std::string Facechat::grephApi(){
     cpr::Response r = mPostSession.Get();
     helper.logJson(r, "graphApi", true);
     std::string sub="/posts/";
-    std::vector<size_t> postsPositions;
+    std::vector<std::string> postsPositions;
     size_t pos = r.text.find(sub, 0);
     while(pos!=std::string::npos){
         try {
-            postsPositions.push_back(pos);
             pos = r.text.find(sub, pos + 1);
-            std::cout << "Post: " << r.text.substr(pos,  sub.size() + 16) << std::endl;
+            std::string subStr =  r.text.substr(pos,  sub.size() + 16);
+            postsPositions.push_back("https://www.facebook.com/slawomirmentzen"+subStr);
+            //https://www.facebook.com/slawomirmentzen/posts/1274753685919165
+            std::cout << "Post: " <<  subStr<< std::endl;
         }catch(std::out_of_range& exception){
-            std::cout << "Exception in graph api\n";
+            std::cout << "Exception in graph api" << exception.what()<< "\n";
         }
     }
     std::cout<<"Counts of posts: " << postsPositions.size() << std::endl;
 
-    return "";
+    sort( postsPositions.begin(), postsPositions.end() );
+    postsPositions.erase( unique( postsPositions.begin(), postsPositions.end() ), postsPositions.end() );
+
+    std::cout<<"Counts of posts: " << postsPositions.size() << std::endl;
+    /* Print unique resoults*/
+    for(auto s: postsPositions){
+        std::cout<<s<<std::endl;
+    }
+    /*read owner_id*/
+    //ownerid:"1002104843184052
+    auto poss =r.text.find("ownerid");
+    if(poss==std::string::npos){
+        std::cout<<"Couldn't find ownerid"<<std::endl;
+        return;
+    }
+    std::string owner_id = r.text.substr(poss, 17);
+    std::cout<<"owner_id "<< owner_id<<std::endl;
+    /*try to load more posts*/
+//    helper.loadMorePosts(payloadsPairs, "");
+
+    if(postsPositions.size()<1)
+        return;
+
+
+
+
 }
