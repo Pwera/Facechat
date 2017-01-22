@@ -882,11 +882,15 @@ std::string Facechat::grephApi(){
     std::vector<size_t> postsPositions;
     size_t pos = r.text.find(sub, 0);
     while(pos!=std::string::npos){
-        postsPositions.push_back(pos);
-        pos = r.text.find(sub,pos+1);
-        std::cout<<"Post: "<<r.text.substr(pos, 16)<<std::endl;
+        try {
+            postsPositions.push_back(pos);
+            pos = r.text.find(sub, pos + 1);
+            std::cout << "Post: " << r.text.substr(pos,  sub.size() + 16) << std::endl;
+        }catch(std::out_of_range& exception){
+            std::cout << "Exception in graph api\n";
+        }
     }
     std::cout<<"Counts of posts: " << postsPositions.size() << std::endl;
-//    for(auto s : )
+
     return "";
 }
