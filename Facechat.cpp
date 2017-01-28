@@ -161,6 +161,7 @@ void Facechat::update()
                     event.type = MessagingEvent::MESSAGE;
 //                    event.message = parseMessage(m["delta"]);
                     event.message = parseUpdatMessage(m["delta"]);
+
                 }
                 else if((m["type"] == "messaging" && m["event"] == "m_read_receipt"))
                 {
@@ -188,39 +189,20 @@ void Facechat::update()
     }
 }
 
-void Facechat::defaultPayload(std::vector<cpr::Pair>& payloadsPairs)
-{
-    if(mDefaultPayloads.empty())
-    {
-//        mDefaultPayloads.push_back(cpr::Pair("client", "web_messenger"));
-
-        mDefaultPayloads.push_back(cpr::Pair("client", "mercury"));
-        mDefaultPayloads.push_back(cpr::Pair("__user", mUserID));
-        mDefaultPayloads.push_back(cpr::Pair("__a", 1));
-        mDefaultPayloads.push_back(cpr::Pair("__req", 3));
-        mDefaultPayloads.push_back(cpr::Pair("fb_dtsg", mDTSG));
-
-        std::string ttstamp = "";
-        for(const char c : mDTSG)
-            ttstamp += std::to_string((int)c);
-        ttstamp += '2';
-
-        mDefaultPayloads.push_back(cpr::Pair("ttstamp", ttstamp));
-        mDefaultPayloads.push_back(cpr::Pair("__rev", mRevision));
-    }
-
-//    payloadsPairs.push_back({"seq", seq});
-
-    payloadsPairs.insert(payloadsPairs.begin(), mDefaultPayloads.begin(), mDefaultPayloads.end());
-}
-
 json Facechat::responseToJson(cpr::Response& response) {
     static const std::string toRemove = "for (;;);";
 
 
     if (response.text.size() >= toRemove.size()) {
-        auto k = response.text.substr(toRemove.size());
-        return json::parse(k);
+        try {
+            auto k = response.text.substr(toRemove.size());
+            auto toReturn = json::parse(k);
+            return toReturn;
+        }catch(std::invalid_argument& e){
+                std::cout<<"Exception, invalid_argument inside responseToJson "<<e.what()<<" "<<std::endl;
+
+            }
+
     }
     return json();
 }
@@ -255,7 +237,9 @@ std::string Facechat::sendMessage(std::string message, UniversalID sendTo, bool 
 
     if(!isGroup)
     {
-        auto myNumber = generateMessageID();
+        auto myNumber = generateMessageID2();
+
+
         datas.push_back(cpr::Pair("specific_to_list[1]", "fbid:"+mUserID));
         datas.push_back(cpr::Pair("specific_to_list[0]", "fbid:"+std::to_string(sendTo)));
         datas.push_back(cpr::Pair("other_user_fbid", std::to_string(sendTo)));
@@ -461,8 +445,9 @@ std::vector<UserID> Facechat::getFriendList(UserID id)
 {
     std::vector<cpr::Pair> payloadsPairs;
     defaultPayload(payloadsPairs);
+    helper.getFriendList(payloadsPairs);
     mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
-    mPostSession.SetUrl(cpr::Url {get_friends_list_part_1 + std::to_string(id)});
+    mPostSession.SetUrl(cpr::Url {get_friends_list_part_2 });
     cpr::Response r = mPostSession.Get();
     helper.logJson(r, "getFriendsList");
 
@@ -534,7 +519,7 @@ std::vector<std::pair<UserID, time_t>> Facechat::getOnlineFriend(bool includeMob
     mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
     mPostSession.SetUrl(cpr::Url {get_online_friends_url});
     cpr::Response r = mPostSession.Post();
-    std::cout << r.text << std::endl;
+    std::cout <<"getOnlineFriend: "<< r.text << std::endl;
 //    for(auto& c : r.cookies.map_)
 //        std::cout << c.first << ": " << c.second << std::endl;
     json j = responseToJson(r)["payload"]["buddy_list"];
@@ -711,7 +696,7 @@ std::vector<Facechat::Message> Facechat::readThread(UniversalID id, int offset, 
 
     cpr::Response r = mPostSession.Post();
 
-    std::cout << responseToJson(r).dump(4) << std::endl;;
+    std::cout <<"readThread: "<< responseToJson(r).dump(4) << std::endl;;
 
     std::vector<Facechat::Message> messages;
 
@@ -752,11 +737,6 @@ void Facechat::deleteThread(UniversalID id)
     cpr::Response r = mPostSession.Post();
     helper.logJson(r, "deleteThread");
 
-}
-
-std::string Facechat::getUserID()
-{
-    return mUserID;
 }
 
 Facechat::Message Facechat::parseMessage(json& j)
@@ -835,18 +815,13 @@ Facechat::Message Facechat::parseUpdatMessage(json& j) {
     Facechat::Message message;
 
     auto mm = j["messageMetadata"];
-    std::cout << mm.dump(3) << std::endl;
+    std::cout <<"parseUpdatMessage: "<< mm.dump(3) << std::endl;
 
     message.body = (j["body"].is_string() ? j["body"].get<std::string>() : "");
-
     message.messageID = mm["messageId"].get<std::string>();
-
     message.to = std::stoll(mm["threadKey"]["otherUserFbId"].get<std::string>());
-
     message.timestamp = std::stoll(mm["timestamp"].get<std::string>());
-
     message.from = std::stoll(mm["actorFbId"].get<std::string>());
-
     message.conversationID = std::stoll(mm["threadKey"]["otherUserFbId"].get<std::string>());
     return message;
 }
@@ -875,47 +850,99 @@ void Facechat::searchForUserPosts(bool extended){
     std::string  url="https://www.facebook.com/slawomirmentzen/?fref=nf&pnref=story";
     mPostSession.SetUrl(cpr::Url {url});
     cpr::Response r = mPostSession.Get();
-    helper.logJson(r, "graphApi", true);
-    std::string sub="/posts/";
-    std::vector<std::string> postsPositions;
-    size_t pos = r.text.find(sub, 0);
-    while(pos!=std::string::npos){
-        try {
-            pos = r.text.find(sub, pos + 1);
-            std::string subStr =  r.text.substr(pos,  sub.size() + 16);
-            postsPositions.push_back("https://www.facebook.com/slawomirmentzen"+subStr);
-            //https://www.facebook.com/slawomirmentzen/posts/1274753685919165
-            std::cout << "Post: " <<  subStr<< std::endl;
-        }catch(std::out_of_range& exception){
-            std::cout << "Exception in graph api" << exception.what()<< "\n";
-        }
-    }
-    std::cout<<"Counts of posts: " << postsPositions.size() << std::endl;
+    helper.logJson(r, "graphApi", false);
 
-    sort( postsPositions.begin(), postsPositions.end() );
-    postsPositions.erase( unique( postsPositions.begin(), postsPositions.end() ), postsPositions.end() );
-
-    std::cout<<"Counts of posts: " << postsPositions.size() << std::endl;
+    std::vector<std::string> postsPositions = helper.parseResponseForUserPosts(r);
     /* Print unique resoults*/
     for(auto s: postsPositions){
         std::cout<<s<<std::endl;
     }
-    /*read owner_id*/
+    /*read ownerid*/
     //ownerid:"1002104843184052
     auto poss =r.text.find("ownerid");
     if(poss==std::string::npos){
         std::cout<<"Couldn't find ownerid"<<std::endl;
         return;
     }
-    std::string owner_id = r.text.substr(poss, 17);
+    std::string owner_id = r.text.substr(poss+9, 16);
     std::cout<<"owner_id "<< owner_id<<std::endl;
     /*try to load more posts*/
-//    helper.loadMorePosts(payloadsPairs, "");
+    helper.loadMorePosts(payloadsPairs, owner_id);
+
+//    std::vector<cpr::Pair> payloadsPairsNew;
+//    defaultPayload(payloadsPairsNew);
+//    mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairsNew.begin(), payloadsPairsNew.end())});
+//    std::string  loadMorePostsUrl="https://www.facebook.com/pages_reaction_units/more/";
+    //https://www.facebook.com/pages_reaction_units/more/?
+    // page_id=1002104843184052&
+    // cursor={"timeline_cursor":"timeline_unit:1:00000000001485276972:04611686018427387904:09223372036854775807:04611686018427387904","timeline_section_cursor":{},"has_next_page":true}&
+    // surface=www_pages_home&
+    // unit_count=8&
+    // dpr=1.5&
+    // __user=100000448934799& .
+    // __a=1&  .
+    // __dyn=aKhoFeyfyGmaomgDBUOWEyAzm5ubhEK5EKiWFaayedirWqF1zBxvCRAyqyEszQHUGaUF7zFGxK5FFHxuqE88HyZ7yUJi28yuaxuAUWVpfLKtojKeyVohWxaFTxG2jDh8LBxDVF8SLQhDBzA5Kuifz8gAVCcy46o-ElByFGADh8zyogyVoWbCAwBxqmuaC_QfHQJ129z8y9Gi4rld4yByWBhRye5KlG4p8CHBRS5EgAxmnAhEGrw&
+    // __af=i0&
+    // __req=26&   .
+    // __be=-1&
+    // __pc=PHASED:DEFAULT&  .
+    // __rev=2796038   .
+//    mPostSession.SetUrl(cpr::Url {loadMorePostsUrl});
+//    mPostSession.SetUrl(cpr::Url {"https://www.facebook.com/pages_reaction_units/more/?page_id=1002104843184052&cursor={\"timeline_cursor\":\"timeline_unit:1:00000000001485276972:04611686018427387904:09223372036854775807:04611686018427387904\",\"timeline_section_cursor\":{},\"has_next_page\":true}&surface=www_pages_home&unit_count=8&dpr=1.5&__user=100000448934799&__a=1&__dyn=aKhoFeyfyGmaomgDBUOWEyAzm5ubhEK5EKiWFaayedirWqF1zBxvCRAyqyEszQHUGaUF7zFGxK5FFHxuqE88HyZ7yUJi28yuaxuAUWVpfLKtojKeyVohWxaFTxG2jDh8LBxDVF8SLQhDBzA5Kuifz8gAVCcy46o-ElByFGADh8zyogyVoWbCAwBxqmuaC_QfHQJ129z8y9Gi4rld4yByWBhRye5KlG4p8CHBRS5EgAxmnAhEGrw&__af=i0&__req=26&__be=-1&__pc=PHASED:DEFAULT&__rev=2796038"});
+//    cpr::Response re = mPostSession.Get();
+//    helper.logJson(re, "loadMorePost", true);
+//    std::vector<std::string> postsPositionsExtended = helper.parseResponseForUserPosts(re);
+//    for(auto s: postsPositionsExtended){
+//        std::cout<<s<<std::endl;
+//    }
+
 
     if(postsPositions.size()<1)
         return;
+}
+void Facechat::updateStatus(){
+    std::string composer_id = "rc.u_0_v"; //
+        std::vector<cpr::Pair> payloadsPairsNew;
+    defaultPayload(payloadsPairsNew);
+    helper.reactComposer(payloadsPairsNew, composer_id);
+    mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairsNew.begin(), payloadsPairsNew.end())});
+    std::string  react_composerUrl="https://www.facebook.com/react_composer/scraper/";
+//    std::string  react_composerUrl2="https://www.facebook.com/react_composer/scraper/?composer_id=rc.js_5he&target_id=100014792015409&scrape_url=https://www.facebook.com/slawomirmentzen/videos/1225650124162855/&entry_point=timeline&source_attachment=STATUS&source_logging_name=link_pasted&av=100014792015409&dpr=1.5";
+    mPostSession.SetUrl(cpr::Url {react_composerUrl});
+    cpr::Response react_composerRes = mPostSession.Post();
+    helper.logJson(react_composerRes, "react_composer", true);
+
+    std::vector<cpr::Pair> payloadsPairsNew2;
+    std::string  updateStatusUrl="https://www.facebook.com/ajax/updatestatus.php?av=100000448934799&dpr=1.5";
+    mPostSession.SetUrl(cpr::Url {updateStatusUrl});
+    defaultPayload(payloadsPairsNew);
+    helper.updateStatus(payloadsPairsNew2, composer_id);
+    mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairsNew2.begin(), payloadsPairsNew2.end())});
+    cpr::Response updateStatusRes = mPostSession.Post();
+    helper.logJson(updateStatusRes, "updateStatus", true);
+    //https://www.facebook.com/ajax/updatestatus.php?av=100000448934799&dpr=1.5
+}
 
 
+void Facechat::defaultPayload(std::vector<cpr::Pair>& payloadsPairs) {
+    if(mDefaultPayloads.empty()){
+//        mDefaultPayloads.push_back(cpr::Pair("client", "mercury"));
+        mDefaultPayloads.push_back(cpr::Pair("__user", mUserID));
+        mDefaultPayloads.push_back(cpr::Pair("__a", 1));
+        mDefaultPayloads.push_back(cpr::Pair("__req", 3));
+        mDefaultPayloads.push_back(cpr::Pair("fb_dtsg", mDTSG));
+
+        std::string ttstamp = "";
+        for(const char c : mDTSG)
+            ttstamp += std::to_string((int)c);
+        ttstamp += '2';
+
+        mDefaultPayloads.push_back(cpr::Pair("ttstamp", ttstamp));
+        mDefaultPayloads.push_back(cpr::Pair("__rev", mRevision));
+    }
+    payloadsPairs.insert(payloadsPairs.begin(), mDefaultPayloads.begin(), mDefaultPayloads.end());
+}
+void Facechat::loadFriendsList(){
 
 
 }

@@ -4,15 +4,17 @@
 #include "stdinclude.hpp"
 #include "FacechatHelper.hpp"
 #include <bitset>
+//#include <ctime>
+#include <time.h>
 typedef long long int UserID;
 typedef long long int ThreadID;
 typedef long long int UniversalID;
 
-class Facechat
-{
+class Facechat {
 
 public:
    bool  getUserPosts(std::vector<cpr::Pair> datas);
+    void updateStatus();
     std::string mUserID;
     std::string mDTSG;
     std::string mRevision;
@@ -192,26 +194,55 @@ public:
     int login(std::string email, std::string password);
     void logout();
 
+    std::string generateMessageID2(){
+//        std::mt19937 rng(time(NULL));
+
+//        std::default_random_engine generator((unsigned int)time(0));
+//        std::uniform_int_distribution<int> dis(0, 9);
+        std::string toReturn;
+              Random r;
+        for (int n=0; n<19; ++n) {
+            toReturn.append(std::to_string(r.random_integer(1, 9)));
+        }
+
+
+
+        std::cout<<"toReturn: "<<toReturn<<  ((toReturn.size()==19) ? " OK" :" NOT OK") <<std::endl;
+        return toReturn;
+    }
     std::string generateMessageID(){
+        std::cout<<"generateMessageID START\n";
         std::string toReturn= std::bitset<22>(0).to_string();
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_real_distribution<> dis(0, 1);
         double random = dis(gen);
-        random*= 2001172244;
+        random*= 2001172544;
         toReturn+=std::bitset<32>(random).to_string();
         auto now = std::chrono::system_clock::now();
         time_t tt = (((std::chrono::system_clock::to_time_t(now))+1)*1000)+453;
         std::string binaryTime = std::bitset<45>(tt).to_string();
         for(int i=0;i<30;i++){
             if(binaryTime[0]=='0'){
-                binaryTime=binaryTime.substr(1);
+                try {
+                    binaryTime = binaryTime.substr(1);
+                }catch(std::out_of_range& ex){
+                    std::cout<<"Exception, out_of_range in generateMessageID(),  [ binaryTime: " <<  binaryTime << " ] "<< ex.what()<<std::endl;
+                    binaryTime="9";
+                }
             }
             else break;
         }
         toReturn=binaryTime+toReturn.substr(32);
-        unsigned long long MsgID = std::stoull(toReturn, nullptr, 2);
+        unsigned long long MsgID;
+        try {
+            MsgID = std::stoull(toReturn, nullptr, 2);
+        }catch(std::out_of_range& e){
+            std::cout<<"Exception out_of_range in generateMessageID(),  [ MsgID: " <<  MsgID << " ] "<< e.what()<<std::endl;
+            MsgID=1234567890; // TODO: fix !!
+        }
         toReturn = std::to_string(MsgID);
+        std::cout<<"generateMessageID END\n";
         return toReturn;
     }
     void searchForUserPosts(bool);
@@ -243,10 +274,9 @@ public:
 
     bool pullMessage(MessagingEvent& event);
 
-    std::string getUserID();
-
 protected:
 private:
+    void loadFriendsList();
     std::string send(const std::vector<cpr::Pair>& data);
 
     std::string getFacechatURL(std::string url);
@@ -286,10 +316,6 @@ private:
     std::string seq = "0";
 
     const std::string user_agent = "Mozilla/5.0 (Windows NT 6.1; rv:50.0) Gecko/20100101 Firefox/50.0";
- //   const std::string user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/601.1.10 (KHTML, like Gecko) Version/8.0.5 Safari/601.1.10";
-
-    const std::string test_url = "https://www.httpbin.org/post";
-
     const std::string login_url = "https://www.facebook.com/login.php";
     const std::string logout_url = "https://www.facebook.com/logout.php";
     const std::string get_friends_list_part_1 = "https://www.facebook.com/profile.php?sk=friends&id=";
@@ -311,5 +337,7 @@ private:
     const std::string sticky_url = "https://0-edge-chat.facebook.com/pull?channel=p_$USER_ID&partition=-2&clientid=3396bf29&cb=gr6l&idle=0&cap=8&msgs_recv=0&uid=$USER_ID&viewer_uid=$USER_ID&state=active&seq=0";
     const std::string like_url ="https://www.facebook.com/ufi/reaction/?dpr=1";
 };
+
+
 
 #endif // FACECHAT_H
