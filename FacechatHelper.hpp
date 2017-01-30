@@ -8,10 +8,10 @@ typedef long long int UniversalID;
 class FacechatHelper {
 
 public:
-    void setGroupTitle(std::vector<cpr::Pair>& payloadsPairs ,UniversalID id, std::string title, std::string mUserID){
+    void setGroupTitle(std::vector<cpr::Pair> &payloadsPairs, UniversalID id, std::string title, std::string mUserID) {
         payloadsPairs.push_back(cpr::Pair("client", "mercury"));
         payloadsPairs.push_back(cpr::Pair("message_batch[0][action_type]", "ma-type:log-message"));
-        payloadsPairs.push_back(cpr::Pair("message_batch[0][author]", "fbid:"+mUserID));
+        payloadsPairs.push_back(cpr::Pair("message_batch[0][author]", "fbid:" + mUserID));
         payloadsPairs.push_back(cpr::Pair("message_batch[0][thread_id]", ""));
         payloadsPairs.push_back(cpr::Pair("message_batch[0][source]", "source:chat:web"));
         payloadsPairs.push_back(cpr::Pair("message_batch[0][source_tags][0]", "source:chat"));
@@ -36,17 +36,18 @@ public:
         payloadsPairs.push_back(cpr::Pair("message_batch[0][offline_threading_id]", threadingID));
     }
 
-    void addUserToGroup(std::vector<cpr::Pair> &payloadsPairs, UserID userID, ThreadID group, std::string mUserID){
+    void addUserToGroup(std::vector<cpr::Pair> &payloadsPairs, UserID userID, ThreadID group, std::string mUserID) {
         payloadsPairs.push_back(cpr::Pair("client", "mercury"));
         payloadsPairs.push_back(cpr::Pair("message_batch[0][action_type]", "ma-type:log-message"));
-        payloadsPairs.push_back(cpr::Pair("message_batch[0][author]", "fbid:"+mUserID));
+        payloadsPairs.push_back(cpr::Pair("message_batch[0][author]", "fbid:" + mUserID));
         payloadsPairs.push_back(cpr::Pair("message_batch[0][thread_id]", ""));
         payloadsPairs.push_back(cpr::Pair("message_batch[0][source]", "source:chat:web"));
         payloadsPairs.push_back(cpr::Pair("message_batch[0][source_tags][0]", "source:chat"));
         payloadsPairs.push_back(cpr::Pair("message_batch[0][log_message_type]", "log:subscribe"));
         payloadsPairs.push_back(cpr::Pair("message_batch[0][status]", "0"));
         payloadsPairs.push_back(cpr::Pair("message_batch[0][thread_fbid]", std::to_string(group)));
-        payloadsPairs.push_back(cpr::Pair("message_batch[0][log_message_data][added_participants][0]", "fbid:" + std::to_string(userID)));
+        payloadsPairs.push_back(cpr::Pair("message_batch[0][log_message_data][added_participants][0]",
+                                          "fbid:" + std::to_string(userID)));
         payloadsPairs.push_back(cpr::Pair("message_batch[0][is_unread]", false));
         payloadsPairs.push_back(cpr::Pair("message_batch[0][is_cleared]", false));
         payloadsPairs.push_back(cpr::Pair("message_batch[0][is_forward]", false));
@@ -58,19 +59,23 @@ public:
         payloadsPairs.push_back(cpr::Pair("message_batch[0][manual_retry_cnt]", "0"));
         payloadsPairs.push_back(cpr::Pair("message_batch[0][threading_id]", ""));
     }
-    void loadMorePosts(std::vector<cpr::Pair> &payloadsPairs, std::string mUserID){
-        payloadsPairs.push_back(cpr::Pair("page_id" ,mUserID));
-        payloadsPairs.push_back(cpr::Pair("cursor", "{\"timeline_cursor\":\"timeline_unit:1:00000000001485276972:04611686018427387904:09223372036854775807:04611686018427387904\",\"timeline_section_cursor\":{},\"has_next_page\":true}"));
-        payloadsPairs.push_back(cpr::Pair("surface","www_pages_home"));
+
+    void loadMorePosts(std::vector<cpr::Pair> &payloadsPairs, std::string mUserID) {
+        payloadsPairs.push_back(cpr::Pair("page_id", mUserID));
+        payloadsPairs.push_back(cpr::Pair("cursor",
+                                          "{\"timeline_cursor\":\"timeline_unit:1:00000000001485276972:04611686018427387904:09223372036854775807:04611686018427387904\",\"timeline_section_cursor\":{},\"has_next_page\":true}"));
+        payloadsPairs.push_back(cpr::Pair("surface", "www_pages_home"));
         payloadsPairs.push_back(cpr::Pair("unit_count", "8"));
         payloadsPairs.push_back(cpr::Pair("dpr", "1.5"));
         payloadsPairs.push_back(cpr::Pair("__pc", "PHASED:DEFAULT"));
         payloadsPairs.push_back(cpr::Pair("__af", "i0"));
         payloadsPairs.push_back(cpr::Pair("__be", "-1"));
-        payloadsPairs.push_back(cpr::Pair("__dyn", "aihoFeyfyGmagngDxyG8EiolzkqbxqbAKGiBAy8Z9LFwxBxC9V8CdwIhE98nwgUaqwHUR7yUJi28y4EnFeex3BKuEjKewzWxaFQ12VVojxCVEiHWCDxi5-uifz8lUlwkEG9J7By8K48hxGbwBxq69LZ1uJ12VovGi5qh98FoKEWdxyayoO9GVtqgmx2ii49um"));
+        payloadsPairs.push_back(cpr::Pair("__dyn",
+                                          "aihoFeyfyGmagngDxyG8EiolzkqbxqbAKGiBAy8Z9LFwxBxC9V8CdwIhE98nwgUaqwHUR7yUJi28y4EnFeex3BKuEjKewzWxaFQ12VVojxCVEiHWCDxi5-uifz8lUlwkEG9J7By8K48hxGbwBxq69LZ1uJ12VovGi5qh98FoKEWdxyayoO9GVtqgmx2ii49um"));
 
     }
-    void updateStatus(std::vector<cpr::Pair> &payloadsPairs, std::string& composer_id){
+
+    void updateStatus(std::vector<cpr::Pair> &payloadsPairs, std::string &composer_id) {
         std::string message = "https://www.facebook.com/permalink.php?story_fbid=149737425529324&id=100014792015409";
         std::string composer_session_id = "4ffe58b9-1adb-4975-8ab2-2982ca016c4c";
         payloadsPairs.push_back(cpr::Pair("attachment[params][0]", "1225650124162855"));
@@ -128,12 +133,13 @@ public:
         payloadsPairs.push_back(cpr::Pair("__pc", "PHASED:DEFAULT"));
         payloadsPairs.push_back(cpr::Pair("__af", "i0"));
         payloadsPairs.push_back(cpr::Pair("__be", "-1"));
-        payloadsPairs.push_back(cpr::Pair("__dyn", "aihoFeyfyGmagngDxyG8EiolzkqbxqbAKGiBAy8Z9LFwxBxC9V8CdwIhE98nwgUaqwHUR7yUJi28y4EnFeex3BKuEjKewzWxaFQ12VVojxCVEiHWCDxi5-uifz8lUlwkEG9J7By8K48hxGbwBxq69LZ1uJ12VovGi5qh98FoKEWdxyayoO9GVtqgmx2ii49um"));
+        payloadsPairs.push_back(cpr::Pair("__dyn",
+                                          "aihoFeyfyGmagngDxyG8EiolzkqbxqbAKGiBAy8Z9LFwxBxC9V8CdwIhE98nwgUaqwHUR7yUJi28y4EnFeex3BKuEjKewzWxaFQ12VVojxCVEiHWCDxi5-uifz8lUlwkEG9J7By8K48hxGbwBxq69LZ1uJ12VovGi5qh98FoKEWdxyayoO9GVtqgmx2ii49um"));
 
 
     }
 
-    void reactComposer(std::vector<cpr::Pair> &payloadsPairs, std::string& composer_id){
+    void reactComposer(std::vector<cpr::Pair> &payloadsPairs, std::string &composer_id) {
         std::string message = "https://www.facebook.com/permalink.php?story_fbid=149737425529324&id=100014792015409";
         payloadsPairs.push_back(cpr::Pair("composer_id", composer_id));
         payloadsPairs.push_back(cpr::Pair("target_id", "100014792015409"));
@@ -143,57 +149,59 @@ public:
         payloadsPairs.push_back(cpr::Pair("source_logging_name", "link_pasted"));
         payloadsPairs.push_back(cpr::Pair("av", "100014792015409"));
         payloadsPairs.push_back(cpr::Pair("dpr", "1.5"));
-        payloadsPairs.push_back(cpr::Pair("__dyn", "aihoFeyfyGmagngDxyG8EiolzkqbxqbAKGiBAy8Z9LFwxBxC9V8CdwIhE98nwgUaqwHUR7yUJi28y4EnFeex3BKuEjKewzWxaFQ12VVojxCVEiHWCDxi5-uifz8lUlwkEG9J7By8K48hxGbwBxq69LZ1uJ12VovGi5qh98FoKEWdxyayoO9GVtqgmx2ii49um"));
+        payloadsPairs.push_back(cpr::Pair("__dyn",
+                                          "aihoFeyfyGmagngDxyG8EiolzkqbxqbAKGiBAy8Z9LFwxBxC9V8CdwIhE98nwgUaqwHUR7yUJi28y4EnFeex3BKuEjKewzWxaFQ12VVojxCVEiHWCDxi5-uifz8lUlwkEG9J7By8K48hxGbwBxq69LZ1uJ12VovGi5qh98FoKEWdxyayoO9GVtqgmx2ii49um"));
         payloadsPairs.push_back(cpr::Pair("__af", "i0"));
 //        payloadsPairs.push_back(cpr::Pair("__req", "b4"));
         payloadsPairs.push_back(cpr::Pair("__be", "-1"));
         payloadsPairs.push_back(cpr::Pair("__pc", "PHASED:DEFAULT"));
     }
-    void logJson(cpr::Response& r, std::string message= "", bool toFile=false){
-        std::cout<<"------------------------------------------------------\n";
-        std::cout<<message<< " statusCode: "<<r.status_code << " "  << r.url<<" " << " error: "<<r.error.message
-                 <<
-                 (toFile ?  r.text  : "" ) << std::endl;
 
-        std::cout<<"------------------------------------------------------end of "<<message << "\n";
-        if(toFile){
-        std::ofstream write;
-        write.open(message.append(".txt"));
-        write<<r.text;
-        write.close(); }
+    void logJson(cpr::Response &r, std::string message = "", bool toFile = false) {
+        std::cout << "------------------------------------------------------\n";
+        std::cout << message << " statusCode: " << r.status_code << " " << r.url << " " << " error: " << r.error.message
+                  <<
+                  std::endl;
 
-        ;
+        std::cout << "------------------------------------------------------end of " << message << "\n";
+        if (toFile) {
+            std::ofstream write;
+            write.open(message.append(".txt"));
+            write << r.text;
+            write.close();
+        }
+    }
+
+    void logPayloads(std::vector<cpr::Pair> &payloadsPairs) {
+        for (int i = 0; i <payloadsPairs.size() ; ++i) {
+            std::cout<<std::to_string(i) << ": " <<payloadsPairs[i].key << " "<< payloadsPairs[i].value<<std::endl;
+        }
 
     }
 
-    std::vector<std::string> parseResponseForUserPosts(cpr::Response r){
-        std::string sub="/posts/";
+    std::vector<std::string> parseResponseForUserPosts(cpr::Response r) {
+        std::string sub = "/posts/";
         std::vector<std::string> postsPositions;
         size_t pos = r.text.find(sub, 0);
-        while(pos!=std::string::npos){
+        while (pos != std::string::npos) {
             try {
                 pos = r.text.find(sub, pos + 1);
-                std::string subStr =  r.text.substr(pos,  sub.size() + 16);
-                postsPositions.push_back("https://www.facebook.com/slawomirmentzen"+subStr);
+                std::string subStr = r.text.substr(pos, sub.size() + 16);
+                postsPositions.push_back("https://www.facebook.com/slawomirmentzen" + subStr);
                 //https://www.facebook.com/slawomirmentzen/posts/1274753685919165
-                std::cout << "Post: " <<  subStr<< std::endl;
-            }catch(std::out_of_range& exception){
-                std::cout << "Exception in graph api" << exception.what()<< "\n";
+                std::cout << "Post: " << subStr << std::endl;
+            } catch (std::out_of_range &exception) {
+                std::cout << "Exception in graph api" << exception.what() << "\n";
             }
         }
-        std::cout<<"Counts of posts: " << postsPositions.size() << std::endl;
+        std::cout << "Counts of posts: " << postsPositions.size() << std::endl;
 
-        sort( postsPositions.begin(), postsPositions.end() );
-        postsPositions.erase( unique( postsPositions.begin(), postsPositions.end() ), postsPositions.end() );
+        sort(postsPositions.begin(), postsPositions.end());
+        postsPositions.erase(unique(postsPositions.begin(), postsPositions.end()), postsPositions.end());
 
-        std::cout<<"Counts of posts: " << postsPositions.size() << std::endl;
+        std::cout << "Counts of posts: " << postsPositions.size() << std::endl;
 
-    return postsPositions;
-    }
-
-    void getFriendList(std::vector<cpr::Pair> &payloadsPairs){
-        payloadsPairs.push_back(cpr::Pair("dpr","1"));
-        payloadsPairs.push_back(cpr::Pair("data", "{\"collection_token\":\"100014792015409:2356318349:2\",\"cursor\":\"MDpub3Rfc3RydWN0dXJlZDoxMDAwMDI2ODcxMjQyNTQ=\",\"tab_key\":\"friends\",\"profile_id\":100014792015409,\"overview\":false,\"lst\":\"100014792015409:100014792015409:1485622205\",\"ftid\":null,\"order\":null,\"sk\":\"friends\",\"importer_state\":null}"));
+        return postsPositions;
     }
 
 };
