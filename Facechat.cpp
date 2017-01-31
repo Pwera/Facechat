@@ -458,15 +458,15 @@ std::vector<UserID> Facechat::getFriendList(UserID id) {
 
     payloadsPairs.push_back(cpr::Pair("", ""));
 
-
-    for (int i = 0; i < 100; i++) {
+try{
+    for (int i = 0; i < 300; i++) {
 
         data["cursor"] = encodeBase64("0:not_structured:" + std::to_string(friends.back()));
 
         payloadsPairs.pop_back();
-//        std::cout << "WHILE: " << data.dump() << std::endl;
+
         payloadsPairs.push_back(cpr::Pair("data", data.dump()));
-        helper.logPayloads(payloadsPairs);
+//        helper.logPayloads(payloadsPairs);
         mPostSession.SetUrl(cpr::Url {get_friends_list_part_2});
         mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
         r = mPostSession.Post();
@@ -482,7 +482,7 @@ std::vector<UserID> Facechat::getFriendList(UserID id) {
         for (auto element : j) {
             if (element[0] == "AddFriendButton") {
                 auto newfriend = element[3][1];
-                std::cout << "newfriend: " << newfriend << std::endl;
+//                std::cout << "newfriend: " << newfriend << std::endl;
                 friends.push_back(newfriend);
                 added++;
             }
@@ -496,10 +496,20 @@ std::vector<UserID> Facechat::getFriendList(UserID id) {
 //        data["lst"] ="100014792015409:100014792015409:1485798526";
         std::cout << "\n\n\n";
     }
+    }catch(std::exception& e){
+        std::cout<<"Exception in  main"<< e.what() <<std::endl;
+    }
     std::cout << "2friends: " << friends.size() << std::endl;
     sort(friends.begin(), friends.end());
     friends.erase(unique(friends.begin(), friends.end()), friends.end());
     std::cout << "2 uniqued friends: " << friends.size() << std::endl;
+    std::fstream os;
+    os.open("friends.txt", std::fstream::in | std::fstream::out | std::fstream::app);
+    for(int i =0;i<friends.size();i++){
+        os << i<< ": "<<friends[i]<<std::endl;
+    }
+    os.close();
+    std::cout << "close"<<std::endl;
     return friends;
 }
 
@@ -542,16 +552,23 @@ std::vector<std::pair<UserID, time_t>> Facechat::getOnlineFriend(bool includeMob
 Facechat::UserInfo Facechat::getUserInfo(UserID id) {
     std::vector<cpr::Pair> payloadsPairs;
     defaultPayload(payloadsPairs);
+    UserInfo info;
 
     payloadsPairs.push_back(cpr::Pair("ids[0]", std::to_string(id)));
 
     mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
     mPostSession.SetUrl(cpr::Url {get_user_info});
     cpr::Response r = mPostSession.Post();
-    helper.logJson(r, "getUserInfo");
-    json j = responseToJson(r)["payload"]["profiles"][std::to_string(id)];
+//    helper.logJson(r, "getUserInfo");
+    json j;
+    try{
+     j = responseToJson(r)["payload"]["profiles"][std::to_string(id)];
+} catch (std::exception &e) {
+    std::cout << "Exception in  getUserInfo 1" << e.what() << std::endl;
+        return info;
+}
 
-    UserInfo info;
+try{
     info.completeName = j["name"].get<std::string>();
     info.firstName = j["firstName"].get<std::string>();
     info.gender = j["gender"];
@@ -560,6 +577,10 @@ Facechat::UserInfo Facechat::getUserInfo(UserID id) {
     info.profilePicture = j["thumbSrc"].get<std::string>();
     info.profileUrl = j["uri"].get<std::string>();
     info.vanity = j["vanity"].get<std::string>();
+} catch (std::exception &e) {
+    std::cout << "Exception in  getUserInfo 2" << e.what() << std::endl;
+    return info;
+}
     return info;
 }
 
