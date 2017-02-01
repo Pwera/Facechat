@@ -6,6 +6,7 @@
 #include <bitset>
 //#include <ctime>
 #include <time.h>
+
 typedef long long int UserID;
 typedef long long int ThreadID;
 typedef long long int UniversalID;
@@ -13,13 +14,14 @@ typedef long long int UniversalID;
 class Facechat {
 
 public:
-   bool  getUserPosts(std::vector<cpr::Pair> datas);
+    bool getUserPosts(std::vector<cpr::Pair> datas);
+
     void updateStatus();
+
     std::string mUserID;
     std::string mDTSG;
     std::string mRevision;
-    struct Thread
-    {
+    struct Thread {
         std::vector<UserID> pastParticipant;
         std::vector<UserID> participants;
 
@@ -31,37 +33,36 @@ public:
         ThreadID threadID;
     };
 
-    struct Group
-    {
+    struct Group {
         int groupParticipantCount;
         std::vector<UserID> groupParticipantIDs;
         std::vector<std::string> groupParticipantNames;
         std::string groupName;
     };
 
-    struct Attachment
-    {
+    struct Attachment {
         long long int stickerID;
 
         std::string url;
         std::string previewUrl;
 
-        enum Type {STICKER, PHOTO, VIDEO, UNKNOW} type;
-        static Type stringToAttachmentType(const std::string& string)
-        {
-            if(string == "sticker")
+        enum Type {
+            STICKER, PHOTO, VIDEO, UNKNOW
+        } type;
+
+        static Type stringToAttachmentType(const std::string &string) {
+            if (string == "sticker")
                 return STICKER;
-            else if(string == "photo")
+            else if (string == "photo")
                 return PHOTO;
-            else if(string == "video")
+            else if (string == "video")
                 return VIDEO;
 
             return UNKNOW;
         }
     };
 
-    struct Message
-    {
+    struct Message {
         UserID from;
         UserID to = 0; //is not set when group
         std::string body;
@@ -79,21 +80,21 @@ public:
         Attachment attachment;
     };
 
-    struct TypingStatus
-    {
+    struct TypingStatus {
         UserID from;
         bool isTyping;
         bool fromMobile;
     };
 
-    struct OnlineStatus
-    {
-        enum Status {ACTIVE, IDLE, INVISIBLE};
-        static Status stringToStatus(const std::string& string)
-        {
-            if(string == "idle")
+    struct OnlineStatus {
+        enum Status {
+            ACTIVE, IDLE, INVISIBLE
+        };
+
+        static Status stringToStatus(const std::string &string) {
+            if (string == "idle")
                 return IDLE;
-            else if(string == "active")
+            else if (string == "active")
                 return ACTIVE;
 
             return INVISIBLE;
@@ -110,39 +111,37 @@ public:
         UserID from;
     };
 
-    struct ReadStatus
-    {
+    struct ReadStatus {
         UserID from;
     };
 
-    struct MessagingEvent
-    {
+    struct MessagingEvent {
         MessagingEvent() : message() {};
 
-        union
-        {
+        union {
             Facechat::Message message;
             Facechat::TypingStatus typingStatus;
             Facechat::OnlineStatus onlineStatus;
             Facechat::ReadStatus readStatus;
         };
 
-        enum Type {MESSAGE, TYPING_STATUS, ONLINE_STATUS, READ_STATUS} type = MESSAGE;
+        enum Type {
+            MESSAGE, TYPING_STATUS, ONLINE_STATUS, READ_STATUS
+        } type = MESSAGE;
 
-        MessagingEvent& operator=(const MessagingEvent& other)
-        {
-            if(this->type == MESSAGE && other.type != MESSAGE)
+        MessagingEvent &operator=(const MessagingEvent &other) {
+            if (this->type == MESSAGE && other.type != MESSAGE)
                 (&this->message)->~Message();
-            else if(this->type != MESSAGE && other.type == MESSAGE)
-                new (&this->message) Message();
+            else if (this->type != MESSAGE && other.type == MESSAGE)
+                new(&this->message) Message();
 
-            if(other.type == MESSAGE)
+            if (other.type == MESSAGE)
                 this->message = other.message;
-            else if(other.type == TYPING_STATUS)
+            else if (other.type == TYPING_STATUS)
                 this->typingStatus = other.typingStatus;
-            else if(other.type == ONLINE_STATUS)
+            else if (other.type == ONLINE_STATUS)
                 this->onlineStatus = other.onlineStatus;
-            else if(other.type == READ_STATUS)
+            else if (other.type == READ_STATUS)
                 this->readStatus = other.readStatus;
 
             this->type = other.type;
@@ -150,20 +149,17 @@ public:
             return *this;
         }
 
-        MessagingEvent(const MessagingEvent& other) : message()
-        {
+        MessagingEvent(const MessagingEvent &other) : message() {
             *this = other;
         }
 
-        ~MessagingEvent()
-        {
-            if(type == MESSAGE)
+        ~MessagingEvent() {
+            if (type == MESSAGE)
                 (&this->message)->~Message();
         }
     };
 
-    struct UserInfo
-    {
+    struct UserInfo {
         std::string completeName;
         std::string firstName;
         std::string vanity;
@@ -174,10 +170,10 @@ public:
         UserID id;
         std::string profilePicture;
         std::string profileUrl;
+        int friendsCount;
     };
 
-    struct UserSearchReturn
-    {
+    struct UserSearchReturn {
         std::string name;
         UserID id;
         std::string profilePicture;
@@ -188,111 +184,147 @@ public:
     };
 
     Facechat();
+
     virtual ~Facechat();
+
     FacechatHelper helper;
 
     int login(std::string email, std::string password);
+
     void logout();
 
-    std::string generateMessageID2(){
+    std::string generateMessageID2() {
 //        std::mt19937 rng(time(NULL));
 
 //        std::default_random_engine generator((unsigned int)time(0));
 //        std::uniform_int_distribution<int> dis(0, 9);
         std::string toReturn;
-              Random r;
-        for (int n=0; n<19; ++n) {
+        Random r;
+        for (int n = 0; n < 19; ++n) {
             toReturn.append(std::to_string(r.random_integer(1, 9)));
         }
 
 
-
-        std::cout<<"toReturn: "<<toReturn<<  ((toReturn.size()==19) ? " OK" :" NOT OK") <<std::endl;
+        std::cout << "toReturn: " << toReturn << ((toReturn.size() == 19) ? " OK" : " NOT OK") << std::endl;
         return toReturn;
     }
-    std::string generateMessageID(){
-        std::cout<<"generateMessageID START\n";
-        std::string toReturn= std::bitset<22>(0).to_string();
+
+    std::string generateMessageID() {
+        std::cout << "generateMessageID START\n";
+        std::string toReturn = std::bitset<22>(0).to_string();
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_real_distribution<> dis(0, 1);
         double random = dis(gen);
-        random*= 2001172544;
-        toReturn+=std::bitset<32>(random).to_string();
+        random *= 2001172544;
+        toReturn += std::bitset<32>(random).to_string();
         auto now = std::chrono::system_clock::now();
-        time_t tt = (((std::chrono::system_clock::to_time_t(now))+1)*1000)+453;
+        time_t tt = (((std::chrono::system_clock::to_time_t(now)) + 1) * 1000) + 453;
         std::string binaryTime = std::bitset<45>(tt).to_string();
-        for(int i=0;i<30;i++){
-            if(binaryTime[0]=='0'){
+        for (int i = 0; i < 30; i++) {
+            if (binaryTime[0] == '0') {
                 try {
                     binaryTime = binaryTime.substr(1);
-                }catch(std::out_of_range& ex){
-                    std::cout<<"Exception, out_of_range in generateMessageID(),  [ binaryTime: " <<  binaryTime << " ] "<< ex.what()<<std::endl;
-                    binaryTime="9";
+                } catch (std::out_of_range &ex) {
+                    std::cout << "Exception, out_of_range in generateMessageID(),  [ binaryTime: " << binaryTime
+                              << " ] " << ex.what() << std::endl;
+                    binaryTime = "9";
                 }
-            }
-            else break;
+            } else break;
         }
-        toReturn=binaryTime+toReturn.substr(32);
+        toReturn = binaryTime + toReturn.substr(32);
         unsigned long long MsgID;
         try {
             MsgID = std::stoull(toReturn, nullptr, 2);
-        }catch(std::out_of_range& e){
-            std::cout<<"Exception out_of_range in generateMessageID(),  [ MsgID: " <<  MsgID << " ] "<< e.what()<<std::endl;
-            MsgID=1234567890; // TODO: fix !!
+        } catch (std::out_of_range &e) {
+            std::cout << "Exception out_of_range in generateMessageID(),  [ MsgID: " << MsgID << " ] " << e.what()
+                      << std::endl;
+            MsgID = 1234567890; // TODO: fix !!
         }
         toReturn = std::to_string(MsgID);
-        std::cout<<"generateMessageID END\n";
+        std::cout << "generateMessageID END\n";
         return toReturn;
     }
+
     void searchForUserPosts(bool);
+
     std::string like(std::string message, UniversalID sendTo, UserID userID);
-    std::string sendMessage(std::string message, UniversalID sendTo, bool isGroup = false, std::vector<cpr::Pair> datas = {{}});
+
+    std::string
+    sendMessage(std::string message, UniversalID sendTo, bool isGroup = false, std::vector<cpr::Pair> datas = {{}});
+
     std::string sendAttachement(std::string message, std::string filePath, UniversalID sendTo, bool isGroup = false);
+
     std::string sendUrl(std::string message, std::string url, UniversalID sendTo, bool isGroup = false);
+
     std::string sendSticker(std::string stickerID, UniversalID sendTo, bool isGroup = false);
+
     std::string createGroup(std::string message, std::vector<UserID> otherUsers);
 
     void deleteMessage(std::string messageID);
+
     void markAsRead(UniversalID threadID);
+
     void setTypingStatus(UniversalID threadID, bool typing, bool isGroup = false);
 
     void deleteThread(UniversalID id);
+
     Facechat::Thread getThread(UniversalID id);
-    std::vector<Facechat::Message> readThread(UniversalID id, int offset = 0, int limit = 20, time_t timestamp = time(NULL), bool isGroup = false);
+
+    std::vector<Facechat::Message>
+    readThread(UniversalID id, int offset = 0, int limit = 20, time_t timestamp = time(NULL), bool isGroup = false);
+
     std::vector<Facechat::Thread> findThread(std::string name, int offset = 0, int limit = 20);
+
     std::vector<Facechat::Thread> listThread(int offset = 0, int limit = 20);
 
     UserInfo getUserInfo(UserID id);
+
     std::vector<UserSearchReturn> findUser(std::string name);
+
     std::vector<UserID> getFriendList(UserID id);
+
     std::vector<std::pair<UserID, time_t>> getOnlineFriend(bool includeMobile = false);
 
     void setGroupTitle(ThreadID id, std::string title);
+
     void addUserToGroup(UserID userID, ThreadID group);
+
     void removeUserFromGroup(UserID userID, ThreadID group);
 
-    bool pullMessage(MessagingEvent& event);
+    bool pullMessage(MessagingEvent &event);
+
+    bool recallSendInvitations(std::string Id);
+
+    bool searchSendInvitationsList();
+
+    bool sendInvitation(std::string Id);
+
+    bool acceptInvitation(std::string Id);
+
+    bool searchFriendInvitationList();
 
 protected:
 private:
-    void loadFriendsList();
-    std::string send(const std::vector<cpr::Pair>& data);
+    std::string send(const std::vector<cpr::Pair> &data);
 
     std::string getFacechatURL(std::string url);
+
     json uploadFile(std::string filePath);
 
     void update();
 
-    void defaultPayload(std::vector<cpr::Pair>& payloadsPairs);
+    void defaultPayload(std::vector<cpr::Pair> &payloadsPairs);
 
     static std::string generateOfflineThreadingID();
 
-    static json responseToJson(cpr::Response& response);
+    static json responseToJson(cpr::Response &response);
 
-    static Thread parseThread(json& j);
-    static Message parseMessage(json& j);
-    static Message parseUpdatMessage(json& j);
+    static Thread parseThread(json &j);
+
+    static Message parseMessage(json &j);
+
+    static Message parseUpdatMessage(json &j);
 
     std::deque<MessagingEvent> mEvents;
     std::mutex mEventsMutex;
@@ -335,9 +367,8 @@ private:
     const std::string remove_user_from_group_url = "https://www.facebook.com/chat/remove_participants";
     const std::string pull_message_url = "https://0-edge-chat.facebook.com/pull?channel=p_$USER_ID&partition=-2&clientid=3396bf29&cb=gr6l&idle=0&cap=8&msgs_recv=0&uid=$USER_ID&viewer_uid=$USER_ID&state=active&seq=$SEQ&sticky_token=$STICKY&sticky_pool=$POOL";
     const std::string sticky_url = "https://0-edge-chat.facebook.com/pull?channel=p_$USER_ID&partition=-2&clientid=3396bf29&cb=gr6l&idle=0&cap=8&msgs_recv=0&uid=$USER_ID&viewer_uid=$USER_ID&state=active&seq=0";
-    const std::string like_url ="https://www.facebook.com/ufi/reaction/?dpr=1";
+    const std::string like_url = "https://www.facebook.com/ufi/reaction/?dpr=1";
 };
-
 
 
 #endif // FACECHAT_H

@@ -201,7 +201,8 @@ std::string Facechat::send(const std::vector<cpr::Pair> &data) {
 
     payloadsPairs.push_back(cpr::Pair("__af", "i0"));
     payloadsPairs.push_back(cpr::Pair("__be", "-1"));
-    payloadsPairs.push_back(cpr::Pair("__dyn", "aihoFeyfyGmagngDxyG8EiolzkqbxqbAKGiBAy8Z9LFwxBxC9V8CdwIhE98nwgUaqwHUR7yUJi28y4EnFeex3BKuEjKewzWxaFQ12VVojxCVEiHWCDxi5-uifz8lUlwkEG9J7By8K48hxGbwBxq69LZ1uJ12VovGi5qh98FoKEWdxyayoO9GVtqgmx2ii49um"));
+    payloadsPairs.push_back(cpr::Pair("__dyn",
+                                      "aihoFeyfyGmagngDxyG8EiolzkqbxqbAKGiBAy8Z9LFwxBxC9V8CdwIhE98nwgUaqwHUR7yUJi28y4EnFeex3BKuEjKewzWxaFQ12VVojxCVEiHWCDxi5-uifz8lUlwkEG9J7By8K48hxGbwBxq69LZ1uJ12VovGi5qh98FoKEWdxyayoO9GVtqgmx2ii49um"));
     payloadsPairs.push_back(cpr::Pair("__pc", "PHASED:DEFAULT"));
 
     payloadsPairs.insert(payloadsPairs.end(), data.begin(), data.end());
@@ -420,7 +421,7 @@ std::vector<UserID> Facechat::getFriendList(UserID id) {
     mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
     mPostSession.SetUrl(cpr::Url {get_friends_list_part_1 + std::to_string(id)});
     cpr::Response r = mPostSession.Get();
-    helper.logJson(r, "getFriendsList");
+//    helper.logJson(r, "getFriendsList");
 
     std::vector<UserID> friends;
 //    friends.reserve(2000);
@@ -458,58 +459,53 @@ std::vector<UserID> Facechat::getFriendList(UserID id) {
 
     payloadsPairs.push_back(cpr::Pair("", ""));
 
-try{
-    for (int i = 0; i < 300; i++) {
+    try {
+        for (int i = 0; i < 5; i++) {
 
-        data["cursor"] = encodeBase64("0:not_structured:" + std::to_string(friends.back()));
+            data["lst"] = mUserID + ":" + std::to_string(id) + ":1485798526";
+            //std::cout << mUserID << ":" << std::to_string(id) << ":1485798526" << std::endl;
+            data["cursor"] = encodeBase64("0:not_structured:" + std::to_string(friends.back()));
 
-        payloadsPairs.pop_back();
+            payloadsPairs.pop_back();
 
-        payloadsPairs.push_back(cpr::Pair("data", data.dump()));
+            payloadsPairs.push_back(cpr::Pair("data", data.dump()));
 //        helper.logPayloads(payloadsPairs);
-        mPostSession.SetUrl(cpr::Url {get_friends_list_part_2});
-        mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
-        r = mPostSession.Post();
-        auto tokenPos = r.text.find("\"token\":\"");
-        ///token = r.text.substr(tokenPos + 9, 25);
-        token = "100014792015409:2356318349:2";
-//        std::cout << "n token: " << token<< std::endl;
+            mPostSession.SetUrl(cpr::Url {get_friends_list_part_2});
+            mPostSession.SetPayload(
+                    cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
+            r = mPostSession.Post();
+            token = std::to_string(id) + ":2356318349:2";
 
-        int added = 0;
-        json j = responseToJson(r)["jsmods"]["require"];
-        helper.logJson(r, "responseToJson", false);
+            json j = responseToJson(r)["jsmods"]["require"];
+
 //        std::cout << "responseToJson: " << j.dump() << std::endl;
-        for (auto element : j) {
-            if (element[0] == "AddFriendButton") {
-                auto newfriend = element[3][1];
-//                std::cout << "newfriend: " << newfriend << std::endl;
-                friends.push_back(newfriend);
-                added++;
+            for (auto element : j) {
+                if (element[0] == "AddFriendButton") {
+                    auto newfriend = element[3][1];
+//                std::cout <<"el1: "<<element[3][0]<<std::endl;
+                    //                std::cout << "newfriend: " << newfriend << std::endl;
+                    friends.push_back(newfriend);
+                }
             }
-        }
 
-//        if (!added) {
-//            std::cout << "break: " << std::endl;
-//            break;
-//        }
-        data["collection_token"] = "100014792015409:2356318349:2";
-//        data["lst"] ="100014792015409:100014792015409:1485798526";
-        std::cout << "\n\n\n";
-    }
-    }catch(std::exception& e){
-        std::cout<<"Exception in  main"<< e.what() <<std::endl;
+
+            data["collection_token"] = token;
+
+        }
+    } catch (std::exception &e) {
+        std::cout << "Exception in  main" << e.what() << std::endl;
     }
     std::cout << "2friends: " << friends.size() << std::endl;
     sort(friends.begin(), friends.end());
     friends.erase(unique(friends.begin(), friends.end()), friends.end());
     std::cout << "2 uniqued friends: " << friends.size() << std::endl;
-    std::fstream os;
-    os.open("friends.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-    for(int i =0;i<friends.size();i++){
-        os << i<< ": "<<friends[i]<<std::endl;
-    }
-    os.close();
-    std::cout << "close"<<std::endl;
+//    std::fstream os;
+//    os.open("friends.txt", std::fstream::in | std::fstream::out | std::fstream::app);
+//    for(int i =0;i<friends.size();i++){
+//        os << i<< ": "<<friends[i]<<std::endl;
+//    }
+//    os.close();
+    std::cout << "close" << std::endl;
     return friends;
 }
 
@@ -559,29 +555,78 @@ Facechat::UserInfo Facechat::getUserInfo(UserID id) {
     mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
     mPostSession.SetUrl(cpr::Url {get_user_info});
     cpr::Response r = mPostSession.Post();
+
+    /**/
+    std::string infoStr = "https://www.facebook.com/profile.php?id=";
+    infoStr.append(std::to_string(id));
+    payloadsPairs.pop_back();
+    mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
+    mPostSession.SetUrl(cpr::Url {infoStr});
+    cpr::Response re2 = mPostSession.Get();
+    //100 wspolnych znajomych
+    //std::cout<<"-> \n"<<re2.text<<std::endl;
+    size_t wspolniznajomi;
+    try {
+        wspolniznajomi = re2.text.find("wspólnych znajomych");
+        //wspolni znajomi
+        if (wspolniznajomi != std::string::npos) {
+            std::cout << "wspolniznajomi: " << re2.text.substr(wspolniznajomi - 4, 4) << "\n\n" << std::endl;
+        } else {
+            std::cout << "brak\n";
+        }
+    } catch (std::exception &e) {
+        std::cout << "Excepttion: " << e.what() << std::endl;
+    }
+
 //    helper.logJson(r, "getUserInfo");
     json j;
-    try{
-     j = responseToJson(r)["payload"]["profiles"][std::to_string(id)];
-} catch (std::exception &e) {
-    std::cout << "Exception in  getUserInfo 1" << e.what() << std::endl;
-        return info;
-}
+    try {
+        j = responseToJson(r)["payload"]["profiles"][std::to_string(id)];
+    } catch (
+            std::exception &e
+    ) {
+        std::cout << "Exception in  getUserInfo 1" << e.
 
-try{
-    info.completeName = j["name"].get<std::string>();
-    info.firstName = j["firstName"].get<std::string>();
-    info.gender = j["gender"];
-    info.isFriend = j["is_friend"];
-    info.id = std::stoll(j["id"].get<std::string>());
-    info.profilePicture = j["thumbSrc"].get<std::string>();
-    info.profileUrl = j["uri"].get<std::string>();
-    info.vanity = j["vanity"].get<std::string>();
-} catch (std::exception &e) {
-    std::cout << "Exception in  getUserInfo 2" << e.what() << std::endl;
-    return info;
-}
-    return info;
+                what()
+
+                  <<
+                  std::endl;
+        return
+                info;
+    }
+//std::cout<<j.dump()<<"\n\n\n\n\n";
+
+    try {
+        info.
+                completeName = j["name"].get<std::string>();
+        info.
+                firstName = j["firstName"].get<std::string>();
+        info.
+                gender = j["gender"];
+        info.
+                isFriend = j["is_friend"];
+        info.
+                id = std::stoll(j["id"].get<std::string>());
+        info.
+                profilePicture = j["thumbSrc"].get<std::string>();
+        info.
+                profileUrl = j["uri"].get<std::string>();
+        info.
+                vanity = j["vanity"].get<std::string>();
+    } catch (
+            std::exception &e
+    ) {
+        std::cout << "Exception in  getUserInfo 2" << e.
+
+                what()
+
+                  <<
+                  std::endl;
+        return
+                info;
+    }
+    return
+            info;
 }
 
 std::vector<Facechat::UserSearchReturn> Facechat::findUser(std::string name) {
@@ -920,7 +965,7 @@ void Facechat::defaultPayload(std::vector<cpr::Pair> &payloadsPairs) {
 //        mDefaultPayloads.push_back(cpr::Pair("client", "mercury"));
         mDefaultPayloads.push_back(cpr::Pair("__user", mUserID));
         mDefaultPayloads.push_back(cpr::Pair("__a", 1));
-        mDefaultPayloads.push_back(cpr::Pair("__req", 3));
+        mDefaultPayloads.push_back(cpr::Pair("__req", "u"));// bylo 3
         mDefaultPayloads.push_back(cpr::Pair("fb_dtsg", mDTSG));
 
         std::string ttstamp = "";
@@ -934,7 +979,170 @@ void Facechat::defaultPayload(std::vector<cpr::Pair> &payloadsPairs) {
     payloadsPairs.insert(payloadsPairs.begin(), mDefaultPayloads.begin(), mDefaultPayloads.end());
 }
 
-void Facechat::loadFriendsList() {
+bool Facechat::searchFriendInvitationList() {
+    std::vector<cpr::Pair> payloadsPairs;
+    defaultPayload(payloadsPairs);
+    mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
+    std::string url = "https://www.facebook.com/?sk=ff";
+    mPostSession.SetUrl(cpr::Url {url});
+    cpr::Response r = mPostSession.Get();
+    helper.logJson(r, "searchFriendInvitationList");
+    std::string sub = "Osoby, kt"; //Only for Polish facebook - 'People who can you know'
+    size_t posAcceptEnd = r.text.find(sub);
+    std::vector<std::string> gotInvitations;
+    std::vector<std::string> sendInvitationsTo;
+    size_t pos1 = 0;
+    // size_t pos2 = 0;
+    size_t pos3 = 0;
+    sub = "user.php?id=";
+    while ((pos1 = r.text.find(sub, pos3 + 1)) != std::string::npos) {
+        try {
+            // pos2=r.text.find("&", pos1 + 1);
+            pos3 = r.text.find_first_of("\"&", pos1 + 1);
+            // if(pos2<pos3){
+//                if(pos1<posAcceptEnd)  {
+//                    gotInvitations.push_back(r.text.substr(pos1,pos2-pos1));
+//                    std::cout<<"ID osoby do zaproszenia"<<r.text.substr(pos1,pos2-pos1)<<std::endl;
+//                }
+//                else {
+//                    toSendInvitations.push_back(r.text.substr(pos1, pos2 - pos1));
+//                }
+//           // }
+            if (r.text[(r.text.find("a>", pos3)) + 2] == '<') {
+                if (pos1 < posAcceptEnd) {
+                    std::string FoundID = r.text.substr(pos1 + sub.length(), pos3 - pos1 - sub.length());
+                    gotInvitations.push_back(FoundID);
+                    std::cout << "ID osoby do zaproszenia" << FoundID << std::endl;
+                    acceptInvitation(FoundID);
+                } else {
+                    std::string FoundID = r.text.substr(pos1 + sub.length(), pos3 - pos1 - sub.length());
+                    sendInvitationsTo.push_back(FoundID);
+                    std::cout << "ID osoby ktora mozesz znac" << FoundID << std::endl;
+                    sendInvitation(FoundID);
+                }
+            }
+        } catch (std::out_of_range &exception) {
+            std::cout << "Exception in searchFriendInvitationList\n";
+        }
+    }
+    std::cout << "Counts of gotInvitations: " << gotInvitations.size() << std::endl;
+    std::cout << "Counts of sentInvitaions " << sendInvitationsTo.size() << std::endl;
+
+    return 0;
 
 
 }
+
+
+bool Facechat::acceptInvitation(std::string Id) {
+    std::vector<cpr::Pair> payloadsPairs;
+    defaultPayload(payloadsPairs);
+
+    payloadsPairs.push_back(cpr::Pair("id", Id));
+    payloadsPairs.push_back(cpr::Pair("action", "confirm"));
+    payloadsPairs.push_back(cpr::Pair("viewer_id", mUserID));
+    payloadsPairs.push_back(cpr::Pair("floc:", "friend_center_requests"));
+    payloadsPairs.push_back(cpr::Pair("ref:", "reqs.php"));
+
+    std::string url = "https://www.facebook.com/requests/friends/ajax/?dpr=1";
+    mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
+    mPostSession.SetUrl(cpr::Url {url});
+    cpr::Response r = mPostSession.Post();
+    helper.logJson(r, "sendInvitation");
+    return 0;
+}
+
+bool Facechat::sendInvitation(std::string Id) {
+
+    std::vector<cpr::Pair> payloadsPairs;
+    defaultPayload(payloadsPairs);
+
+    payloadsPairs.push_back(cpr::Pair("to_friend", Id));
+    payloadsPairs.push_back(cpr::Pair("action", "add_friend"));
+    payloadsPairs.push_back(cpr::Pair("how_found", "requests_page_pymk"));
+    payloadsPairs.push_back(cpr::Pair("ref_param", "none"));
+    payloadsPairs.push_back(cpr::Pair("logging_location", "friends_center"));
+
+    std::string url = "https://www.facebook.com/ajax/add_friend/action.php?dpr=1";
+    mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
+    mPostSession.SetUrl(cpr::Url {url});
+    cpr::Response r = mPostSession.Post();
+    helper.logJson(r, "acceptINvitation");
+
+    return 0;
+}
+
+bool Facechat::searchSendInvitationsList() {
+    std::vector<std::string> recallInvitations;
+    std::vector<std::string> sendInvitationsTo;
+    while (recallInvitations.size() != 0) {
+        recallInvitations.clear();
+        sendInvitationsTo.clear();
+        std::vector<cpr::Pair> payloadsPairs;
+        // payloadsPairs.push_back(cpr::Pair("outgoing","1"));
+        defaultPayload(payloadsPairs);
+        // payloadsPairs.push_back(cpr::Pair("fcref","jwl"));
+
+
+        mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
+        std::string url = "https://www.facebook.com/friends/requests/?fcref=jwl&outgoing=1";
+        mPostSession.SetUrl(cpr::Url {url});
+        cpr::Response r = mPostSession.Get();
+        helper.logJson(r, "searchSendInvitationList");
+
+        std::string sub = "Osoby, kt"; //Only for Polish facebook - 'People who can you know'
+        size_t posAcceptEnd = r.text.find(sub);
+
+        size_t pos1 = 0;
+        // size_t pos2 = 0;
+        size_t pos3 = 0;
+        sub = "user.php?id=";
+        while ((pos1 = r.text.find(sub, pos3 + 1)) != std::string::npos) {
+            try {
+                pos3 = r.text.find_first_of("\"&\\", pos1 + 1);
+                if (r.text[(r.text.find("a>", pos3)) + 2] == '<') {
+                    if (pos1 < posAcceptEnd) {
+                        std::string FoundID = r.text.substr(pos1 + sub.length(), pos3 - pos1 - sub.length());
+                        recallInvitations.push_back(FoundID);
+                        std::cout << "ID osoby cofniacia zaproszenia" << FoundID << std::endl;
+                        recallSendInvitations(FoundID);
+                    }
+//                else {
+//                    std::string FoundID = r.text.substr(pos1+sub.length(),pos3-pos1-sub.length());
+//                    sendInvitationsTo.push_back(FoundID);
+//                    std::cout<<"ID osoby ktora mozesz znac"<<FoundID<<std::endl;
+//                    sendInvitation(FoundID);
+//                }
+                }
+            } catch (std::out_of_range &exception) {
+                std::cout << "Exception in searchSendInvitationList\n";
+            }
+        }
+
+        std::cout << "Counts of recallInvitations: " << recallInvitations.size() << std::endl;
+        std::cout << "Counts of sentInvitaions " << sendInvitationsTo.size() << std::endl;
+    }
+    return 0;
+
+
+}
+
+bool Facechat::recallSendInvitations(std::string Id) {
+
+    std::vector<cpr::Pair> payloadsPairs;
+    defaultPayload(payloadsPairs);
+
+    payloadsPairs.push_back(cpr::Pair("friend", Id));
+    payloadsPairs.push_back(cpr::Pair("cancel_ref", "outgoing_requests"));
+    payloadsPairs.push_back(cpr::Pair("confirmed", "1"));
+
+    std::string url = "https://www.facebook.com/ajax/friends/requests/cancel.php?dpr=1";
+    mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
+    mPostSession.SetUrl(cpr::Url {url});
+    cpr::Response r = mPostSession.Post();
+    helper.logJson(r, "recallINvitation");
+
+    return 0;
+}
+
+
