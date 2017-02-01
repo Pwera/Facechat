@@ -4,8 +4,6 @@
 #include <thread>
 #include <chrono>
 #include <algorithm>
-//#include "rmem/rmem_entry.h"
-//#include "rmem/rmem.h"
 #include "Facechat.h"
 
 int main() {
@@ -64,15 +62,25 @@ int main() {
 //        dst.erase(unique(dst.begin(), dst.end()), dst.end());
 //                std::cout<<"dst size: "<<dst.size()<<std::endl;
 
-    std::cout << "myFriends" << myFriends[20] << std::endl;
-    auto myFriends2 = f.getFriendList(myFriends[0]);
-    try {
-        for (auto &us : myFriends2) {
-            auto info = f.getUserInfo(us);
-            std::cout << "us: " << info.completeName << " FR:" << info.isFriend << info.id<<std::endl;
+    std::cout << "myFriends: " << myFriends.size() << std::endl<< std::endl<< std::endl<< std::endl;
+    for (auto &us : myFriends) {
+        auto myFriends2 = f.getFriendList(us);
+        try {
+            for (auto &us : myFriends2) {
+                auto info = f.getUserInfo(us);
+//            std::cout << "us: " << info.completeName << " FR:" << info.isFriend << " "<<info.id<<std::endl;
+                if (!info.isFriend&& false) {
+                    try {
+                        f.sendInvitation(std::to_string(info.id));
+                        std::cout << "Wyslano zaproszenie do " << std::to_string(info.id) << std::endl;
+                    } catch (std::exception &e) {
+                        std::cout << "Exception, pzy wysylaniu zaproszenie do " << std::to_string(info.id) << std::endl;
+                    }
+                }
+            }
+        } catch (std::exception &e) {
+            std::cout << "Exception in  main" << e.what() << std::endl;
         }
-    } catch (std::exception &e) {
-        std::cout << "Exception in  main" << e.what() << std::endl;
     }
     while (1) {
         std::this_thread::sleep_for(std::chrono::seconds(10));
