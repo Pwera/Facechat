@@ -7,6 +7,7 @@
 #include "Facechat.h"
 
 int main() {
+    int invited = 0;
     auto email = "";
     auto password = "";
     Facechat f;
@@ -39,22 +40,28 @@ int main() {
         for (auto &us : myFriends) {
             auto myFriends2 = f.getFriendList(us);
             auto ii = f.getUserInfo(us);
+            if(!ii.isValid){
+                continue;
+            }
             std::cout << "Friends of : "<<ii.completeName <<" "<<ii.id<<" " << myFriends2.size()<<std::endl;
             for (auto &us : myFriends2) {
                 auto info = f.getUserInfo(us);
+                if(!info.isValid){
+                    continue;
+                }
                 std::cout << "us: " << info.completeName << " FR:" << info.isFriend << " " << info.id << std::endl;
                 if (!info.isFriend && info.friendsCount > 10) {
                     try {
                         f.sendInvitation(std::to_string(info.id));
-                        std::cout << "Wyslano zaproszenie do " << std::to_string(info.id) << std::endl;
+                        std::cout << "Wyslano zaproszenie do " << std::to_string(info.id) <<  " liczba zaproszonych: "  <<invited++<< std::endl;
                     } catch (std::exception &e) {
                         std::cout << "Exception, pzy wysylaniu zaproszenie do " << std::to_string(info.id) << std::endl;
                     }
                 }
             }
         }
-    } catch (std::exception &e) {
-        std::cout << "Exception in  mainn" << e.what() << std::endl;
+    } catch (...) {
+        std::cout << "Exception in  mainn" <<  std::endl;
     }
     while (1) {
         std::this_thread::sleep_for(std::chrono::seconds(1000));

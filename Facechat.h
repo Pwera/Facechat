@@ -171,6 +171,7 @@ public:
         std::string profilePicture;
         std::string profileUrl;
         int friendsCount;
+        bool isValid;
     };
 
     struct UserSearchReturn {

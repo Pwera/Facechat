@@ -582,6 +582,7 @@ Facechat::UserInfo Facechat::getUserInfo(UserID id) {
             return info;
         }
 
+        info.isValid=false;
         try {
             info.completeName = j["name"].get<std::string>();
             info.firstName = j["firstName"].get<std::string>();
@@ -592,6 +593,7 @@ Facechat::UserInfo Facechat::getUserInfo(UserID id) {
             info.profileUrl = j["uri"].get<std::string>();
             info.vanity = j["vanity"].get<std::string>();
             info.friendsCount = friendsCount;
+            info.isValid=true;
         } catch (std::exception &e) {
             std::cout << "Exception in  getUserInfo 2" << e.what() << std::endl;
             return info;
@@ -1021,7 +1023,7 @@ bool Facechat::acceptInvitation(std::string Id) {
     mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
     mPostSession.SetUrl(cpr::Url {url});
     cpr::Response r = mPostSession.Post();
-    helper.logJson(r, "sendInvitation");
+//    helper.logJson(r, "sendInvitation");
     return 0;
 }
 
