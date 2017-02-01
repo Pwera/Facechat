@@ -17,24 +17,9 @@ int main() {
 
     UserID piotrWera{100000448934799};
     UserID userID{100014792015409};
-
-//    std::cout<<"End getUserInfo\n";
-//    std::this_thread::sleep_for(std::chrono::seconds(4));
-//    std::vector<UserID> friends= f.getFriendList(userID);
-//    for (auto& fr : friends){
-//        Facechat::UserInfo us = f.getUserInfo(fr);
-//        std::cout<<us.completeName<<std::endl;
-//    }
-
-//    std::cout<<"Friends count : " << friends.size()<<std::endl;
-//    friends.clear();
-//    friends = f.getFriendList(userID);
-//    std::cout<<"Friends count : " << friends.size()<<std::endl;
+    //    std::this_thread::sleep_for(std::chrono::seconds(4));
 
 
-//    htmlToListOfFriends();
-
-//    std::this_thread::sleep_for(std::chrono::seconds(2));
 
 //    for(int i =0;i<30;i++){
 //        std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -49,27 +34,16 @@ int main() {
 
 
 
-//    f.deleteThread(szymonMadera);
-//    v.clear();
-//    v = f.readThread(szymonMadera);
-//    std::cout<<"v size: "<<v.size()<<std::endl;
-
-    auto myFriends = f.getFriendList(userID);
-//        auto myFriends2 = f.getFriendList(userID);
-
-//        std::merge(myFriends.begin(), myFriends.end(), myFriends2.begin(), myFriends2.end(), std::back_inserter(dst));
-//        sort(dst.begin(), dst.end());
-//        dst.erase(unique(dst.begin(), dst.end()), dst.end());
-//                std::cout<<"dst size: "<<dst.size()<<std::endl;
-
-    std::cout << "myFriends: " << myFriends.size() << std::endl<< std::endl<< std::endl<< std::endl;
-    for (auto &us : myFriends) {
-        auto myFriends2 = f.getFriendList(us);
-        try {
+    try {
+        auto myFriends = f.getFriendList(userID);
+        for (auto &us : myFriends) {
+            auto myFriends2 = f.getFriendList(us);
+            auto ii = f.getUserInfo(us);
+            std::cout << "Friends of : "<<ii.completeName <<" "<<ii.id<<" " << myFriends2.size()<<std::endl;
             for (auto &us : myFriends2) {
                 auto info = f.getUserInfo(us);
-//            std::cout << "us: " << info.completeName << " FR:" << info.isFriend << " "<<info.id<<std::endl;
-                if (!info.isFriend&& false) {
+                std::cout << "us: " << info.completeName << " FR:" << info.isFriend << " " << info.id << std::endl;
+                if (!info.isFriend && info.friendsCount > 10) {
                     try {
                         f.sendInvitation(std::to_string(info.id));
                         std::cout << "Wyslano zaproszenie do " << std::to_string(info.id) << std::endl;
@@ -78,12 +52,12 @@ int main() {
                     }
                 }
             }
-        } catch (std::exception &e) {
-            std::cout << "Exception in  main" << e.what() << std::endl;
         }
+    } catch (std::exception &e) {
+        std::cout << "Exception in  mainn" << e.what() << std::endl;
     }
     while (1) {
-        std::this_thread::sleep_for(std::chrono::seconds(10));
+        std::this_thread::sleep_for(std::chrono::seconds(1000));
 //        auto v = f.readThread(piotrWera);
 //        std::cout<<"v size: "<<v.size()<<std::endl;
     }

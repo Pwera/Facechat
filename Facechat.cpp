@@ -1,5 +1,5 @@
 #include "Facechat.h"
-
+#include <algorithm>
 
 Facechat::Facechat() {
 //    mDefaultCookie["_js_reg_fb_gate"] = login_url;
@@ -27,7 +27,7 @@ int Facechat::login(std::string email, std::string password) {
     mUpdateSession.SetPayload(cpr::Payload {{"email", email},
                                             {"pass",  password}});
     cpr::Response r = mPostSession.Post();
-    helper.logJson(r, "login");
+//    helper.logJson(r, "login");
 
     int pos = r.text.find("\"USER_ID\":\"");
     if (pos != std::string::npos)
@@ -42,7 +42,7 @@ int Facechat::login(std::string email, std::string password) {
         mRevision = r.text.substr(pos + 10, r.text.find(",\"", pos + 10) - (pos + 10));
 
     pos = r.text.find("signa", 0);
-    std::cout << "signature id : " << pos << std::endl;
+    //std::cout << "signature id : " << pos << std::endl;
     r.text = ""; //for debug cuz the text is too big and make gdb lag
 
     mPostSession.SetUrl(cpr::Url({replaceAll(sticky_url, "$USER_ID", mUserID)}));
@@ -410,102 +410,99 @@ void Facechat::removeUserFromGroup(UserID userID, ThreadID group) {
 }
 
 std::vector<UserID> Facechat::getFriendList(UserID id) {
-    std::vector<cpr::Pair> payloadsPairs;
-    defaultPayload(payloadsPairs);
-    payloadsPairs.push_back(cpr::Pair("dpr", "1"));
-    payloadsPairs.push_back(cpr::Pair("dyn",
-                                      "7AmajEzUGByA5Q9UoGyk4C5oWq2WiWF298yfirWo8popyUWdwIhE98nwgUy22EaUgxebkwy8xa5WjzEgDKuEjKewExaFQ12VVojxCVEiHWCDxi5-uifz8lUhK1iyECiumFoK48hxB2Uf8oC_UjDQ6EvGi64iiamezES68G5F99Ft5xq498lBVpEjw"));
-    payloadsPairs.push_back(cpr::Pair("__af", "i0"));
-    payloadsPairs.push_back(cpr::Pair("__be", "-1"));
-    payloadsPairs.push_back(cpr::Pair("__pc", "PHASED:DEFAULT"));
-    mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
-    mPostSession.SetUrl(cpr::Url {get_friends_list_part_1 + std::to_string(id)});
-    cpr::Response r = mPostSession.Get();
+    std::vector<UserID> friends;
+    try {
+        std::vector<cpr::Pair> payloadsPairs;
+        defaultPayload(payloadsPairs);
+        payloadsPairs.push_back(cpr::Pair("dpr", "1"));
+        payloadsPairs.push_back(cpr::Pair("dyn",
+                                          "7AmajEzUGByA5Q9UoGyk4C5oWq2WiWF298yfirWo8popyUWdwIhE98nwgUy22EaUgxebkwy8xa5WjzEgDKuEjKewExaFQ12VVojxCVEiHWCDxi5-uifz8lUhK1iyECiumFoK48hxB2Uf8oC_UjDQ6EvGi64iiamezES68G5F99Ft5xq498lBVpEjw"));
+        payloadsPairs.push_back(cpr::Pair("__af", "i0"));
+        payloadsPairs.push_back(cpr::Pair("__be", "-1"));
+        payloadsPairs.push_back(cpr::Pair("__pc", "PHASED:DEFAULT"));
+        mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
+        mPostSession.SetUrl(cpr::Url {get_friends_list_part_1 + std::to_string(id)});
+        cpr::Response r = mPostSession.Get();
 //    helper.logJson(r, "getFriendsList");
 
-    std::vector<UserID> friends;
+
 //    friends.reserve(2000);
 
-    int pos = r.text.find("AllFriendsAppCollectionPagelet");
-    if (pos == std::string::npos) {
-        std::cout << "pos1 not found\n";
-        pos = r.text.find("FriendsAppCollectionPagelet");
-    }
-    if (pos == std::string::npos) {
-        std::cout << "pos2 not found\n";
-        return friends;
-    }
+        int pos = r.text.find("AllFriendsAppCollectionPagelet");
+        if (pos == std::string::npos) {
+            std::cout << "pos1 not found\n";
+            pos = r.text.find("FriendsAppCollectionPagelet");
+        }
+        if (pos == std::string::npos) {
+            std::cout << "pos2 not found\n";
+            return friends;
+        }
 
-    r.text.erase(0, pos);
-    r.text.erase(0, r.text.find("\"token\":\"") + 9);
-    std::string token = r.text.substr(0, r.text.find("\""));
+        r.text.erase(0, pos);
+        r.text.erase(0, r.text.find("\"token\":\"") + 9);
+        std::string token = r.text.substr(0, r.text.find("\""));
 
-    pos = r.text.find("&quot;eng_tid&quot;:&quot;");
-    r.text = r.text.substr(pos, r.text.rfind("&quot;eng_tid&quot;:&quot;") + 55 - pos);
+        pos = r.text.find("&quot;eng_tid&quot;:&quot;");
+        r.text = r.text.substr(pos, r.text.rfind("&quot;eng_tid&quot;:&quot;") + 55 - pos);
 
-    pos = 0;
-    while ((pos = r.text.find("&quot;eng_tid&quot;:&quot;", pos) + 26) != std::string::npos + 26)
-        friends.push_back(std::stoll(r.text.substr(pos, r.text.find("&quot;", pos) - pos)));
+        pos = 0;
+        while ((pos = r.text.find("&quot;eng_tid&quot;:&quot;", pos) + 26) != std::string::npos + 26)
+            friends.push_back(std::stoll(r.text.substr(pos, r.text.find("&quot;", pos) - pos)));
 
-    json data;
-    data["collection_token"] = token;
-    data["tab_key"] = "friends";
-    data["sk"] = "friends";
-    data["profile_id"] = id;
-    data["overview"] = false;
-    data["ftid"].clear();
-    data["order"].clear();
-    data["importer_state"].clear();
+        json data;
+        data["collection_token"] = token;
+        data["tab_key"] = "friends";
+        data["sk"] = "friends";
+        data["profile_id"] = id;
+        data["overview"] = false;
+        data["ftid"].clear();
+        data["order"].clear();
+        data["importer_state"].clear();
 
-    payloadsPairs.push_back(cpr::Pair("", ""));
+        payloadsPairs.push_back(cpr::Pair("", ""));
 
-    try {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 50; i++) {
+            try {
 
-            data["lst"] = mUserID + ":" + std::to_string(id) + ":1485798526";
-            //std::cout << mUserID << ":" << std::to_string(id) << ":1485798526" << std::endl;
-            data["cursor"] = encodeBase64("0:not_structured:" + std::to_string(friends.back()));
+                data["lst"] = mUserID + ":" + std::to_string(id) + ":1485798526";
+                data["cursor"] = encodeBase64("0:not_structured:" + std::to_string(friends.back()));
 
-            payloadsPairs.pop_back();
+                payloadsPairs.pop_back();
 
-            payloadsPairs.push_back(cpr::Pair("data", data.dump()));
-//        helper.logPayloads(payloadsPairs);
-            mPostSession.SetUrl(cpr::Url {get_friends_list_part_2});
-            mPostSession.SetPayload(
-                    cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
-            r = mPostSession.Post();
-            token = std::to_string(id) + ":2356318349:2";
+                payloadsPairs.push_back(cpr::Pair("data", data.dump()));
+                mPostSession.SetUrl(cpr::Url {get_friends_list_part_2});
+                mPostSession.SetPayload(
+                        cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
+                r = mPostSession.Post();
+                token = std::to_string(id) + ":2356318349:2";
 
-            json j = responseToJson(r)["jsmods"]["require"];
+                json j = responseToJson(r)["jsmods"]["require"];
 
 //        std::cout << "responseToJson: " << j.dump() << std::endl;
-            for (auto element : j) {
-                if (element[0] == "AddFriendButton") {
-                    auto newfriend = element[3][1];
+                for (auto element : j) {
+                    if (element[0] == "AddFriendButton") {
+                        auto newfriend = element[3][1];
 //                std::cout <<"el1: "<<element[3][0]<<std::endl;
-                    //                std::cout << "newfriend: " << newfriend << std::endl;
-                    friends.push_back(newfriend);
+                        //                std::cout << "newfriend: " << newfriend << std::endl;
+                        friends.push_back(newfriend);
+                    }
                 }
+
+
+                data["collection_token"] = token;
+
+            } catch (std::exception &e) {
+                std::cout << "Exception in  getFriendList loop " << e.what() << std::endl;
             }
-
-
-            data["collection_token"] = token;
-
         }
+        std::cout << "Found friends: " << friends.size() << std::endl;
+        sort(friends.begin(), friends.end());
+        friends.erase(unique(friends.begin(), friends.end()), friends.end());
+        std::random_shuffle ( friends.begin(), friends.end());
+        std::cout << "Uniqued friends: " << friends.size() << std::endl;
     } catch (std::exception &e) {
-        std::cout << "Exception in  main" << e.what() << std::endl;
+        std::cout << "Exception in getFriendList " << e.what() << std::endl;
     }
-    std::cout << "2friends: " << friends.size() << std::endl;
-    sort(friends.begin(), friends.end());
-    friends.erase(unique(friends.begin(), friends.end()), friends.end());
-    std::cout << "2 uniqued friends: " << friends.size() << std::endl;
-//    std::fstream os;
-//    os.open("friends.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-//    for(int i =0;i<friends.size();i++){
-//        os << i<< ": "<<friends[i]<<std::endl;
-//    }
-//    os.close();
-    std::cout << "close" << std::endl;
     return friends;
 }
 
@@ -547,86 +544,62 @@ std::vector<std::pair<UserID, time_t>> Facechat::getOnlineFriend(bool includeMob
 
 Facechat::UserInfo Facechat::getUserInfo(UserID id) {
     std::vector<cpr::Pair> payloadsPairs;
-    defaultPayload(payloadsPairs);
     UserInfo info;
-
-    payloadsPairs.push_back(cpr::Pair("ids[0]", std::to_string(id)));
-
-    mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
-    mPostSession.SetUrl(cpr::Url {get_user_info});
-    cpr::Response r = mPostSession.Post();
-
-    /**/
-    std::string infoStr = "https://www.facebook.com/profile.php?id=";
-    infoStr.append(std::to_string(id));
-    payloadsPairs.pop_back();
-    mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
-    mPostSession.SetUrl(cpr::Url {infoStr});
-    cpr::Response re2 = mPostSession.Get();
-    //100 wspolnych znajomych
-    //std::cout<<"-> \n"<<re2.text<<std::endl;
-    size_t wspolniznajomi;
     try {
-        wspolniznajomi = re2.text.find("wspólnych znajomych");
-        //wspolni znajomi
-        if (wspolniznajomi != std::string::npos) {
-            std::cout << "wspolniznajomi: " << re2.text.substr(wspolniznajomi - 4, 4) << "\n\n" << std::endl;
-        } else {
-            std::cout << "brak\n";
+        defaultPayload(payloadsPairs);
+
+
+        payloadsPairs.push_back(cpr::Pair("ids[0]", std::to_string(id)));
+
+        mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
+        mPostSession.SetUrl(cpr::Url {get_user_info});
+        cpr::Response r = mPostSession.Post();
+
+        std::string infoStr = "https://www.facebook.com/profile.php?id=";
+        infoStr.append(std::to_string(id));
+        payloadsPairs.pop_back();
+        mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
+        mPostSession.SetUrl(cpr::Url {infoStr});
+        cpr::Response re2 = mPostSession.Get();
+
+        int friendsCount = 0;
+        try {
+            size_t pos = re2.text.find("wspólnych znajomych");
+            if (pos != std::string::npos) {
+                auto almostInt = re2.text.substr(pos - 4, 4);
+                friendsCount = extractIntFromString(almostInt);
+            }
+        } catch (std::exception &e) {
+            std::cout << "Excepttion in getUserInfo 0  " << e.what() << std::endl;
         }
-    } catch (std::exception &e) {
-        std::cout << "Excepttion: " << e.what() << std::endl;
-    }
 
 //    helper.logJson(r, "getUserInfo");
-    json j;
-    try {
-        j = responseToJson(r)["payload"]["profiles"][std::to_string(id)];
-    } catch (
-            std::exception &e
-    ) {
-        std::cout << "Exception in  getUserInfo 1" << e.
+        json j;
+        try {
+            j = responseToJson(r)["payload"]["profiles"][std::to_string(id)];
+        } catch (std::exception &e) {
+            std::cout << "Exception in  getUserInfo 1" << e.what() << std::endl;
+            return info;
+        }
 
-                what()
-
-                  <<
-                  std::endl;
-        return
-                info;
+        try {
+            info.completeName = j["name"].get<std::string>();
+            info.firstName = j["firstName"].get<std::string>();
+            info.gender = j["gender"];
+            info.isFriend = j["is_friend"];
+            info.id = std::stoll(j["id"].get<std::string>());
+            info.profilePicture = j["thumbSrc"].get<std::string>();
+            info.profileUrl = j["uri"].get<std::string>();
+            info.vanity = j["vanity"].get<std::string>();
+            info.friendsCount = friendsCount;
+        } catch (std::exception &e) {
+            std::cout << "Exception in  getUserInfo 2" << e.what() << std::endl;
+            return info;
+        }
+    } catch (std::exception &e) {
+        std::cout << "Excepttion: getUserInfo 4" << e.what() << std::endl;
     }
-//std::cout<<j.dump()<<"\n\n\n\n\n";
-
-    try {
-        info.
-                completeName = j["name"].get<std::string>();
-        info.
-                firstName = j["firstName"].get<std::string>();
-        info.
-                gender = j["gender"];
-        info.
-                isFriend = j["is_friend"];
-        info.
-                id = std::stoll(j["id"].get<std::string>());
-        info.
-                profilePicture = j["thumbSrc"].get<std::string>();
-        info.
-                profileUrl = j["uri"].get<std::string>();
-        info.
-                vanity = j["vanity"].get<std::string>();
-    } catch (
-            std::exception &e
-    ) {
-        std::cout << "Exception in  getUserInfo 2" << e.
-
-                what()
-
-                  <<
-                  std::endl;
-        return
-                info;
-    }
-    return
-            info;
+    return info;
 }
 
 std::vector<Facechat::UserSearchReturn> Facechat::findUser(std::string name) {
@@ -1053,22 +1026,25 @@ bool Facechat::acceptInvitation(std::string Id) {
 }
 
 bool Facechat::sendInvitation(std::string Id) {
+    try {
 
-    std::vector<cpr::Pair> payloadsPairs;
-    defaultPayload(payloadsPairs);
+        std::vector<cpr::Pair> payloadsPairs;
+        defaultPayload(payloadsPairs);
 
-    payloadsPairs.push_back(cpr::Pair("to_friend", Id));
-    payloadsPairs.push_back(cpr::Pair("action", "add_friend"));
-    payloadsPairs.push_back(cpr::Pair("how_found", "requests_page_pymk"));
-    payloadsPairs.push_back(cpr::Pair("ref_param", "none"));
-    payloadsPairs.push_back(cpr::Pair("logging_location", "friends_center"));
+        payloadsPairs.push_back(cpr::Pair("to_friend", Id));
+        payloadsPairs.push_back(cpr::Pair("action", "add_friend"));
+        payloadsPairs.push_back(cpr::Pair("how_found", "requests_page_pymk"));
+        payloadsPairs.push_back(cpr::Pair("ref_param", "none"));
+        payloadsPairs.push_back(cpr::Pair("logging_location", "friends_center"));
 
-    std::string url = "https://www.facebook.com/ajax/add_friend/action.php?dpr=1";
-    mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
-    mPostSession.SetUrl(cpr::Url {url});
-    cpr::Response r = mPostSession.Post();
-    helper.logJson(r, "acceptINvitation");
-
+        std::string url = "https://www.facebook.com/ajax/add_friend/action.php?dpr=1";
+        mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
+        mPostSession.SetUrl(cpr::Url {url});
+        cpr::Response r = mPostSession.Post();
+        helper.logJson(r, "acceptINvitation");
+    } catch (std::exception &e) {
+        std::cout << "Exception in sendInvitation " << e.what() << std::endl;
+    }
     return 0;
 }
 

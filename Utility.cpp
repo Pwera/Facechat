@@ -1,7 +1,7 @@
 #include "Utility.hpp"
 
 
-std::vector<std::string>  htmlToListOfFriends() {
+std::vector<std::string> htmlToListOfFriends() {
     std::vector<std::string> v;
     v.reserve(3000);
     std::ifstream myfile;
@@ -9,7 +9,7 @@ std::vector<std::string>  htmlToListOfFriends() {
     std::stringstream ss;
 
     if (myfile.is_open()) {
-       ss<<myfile.rdbuf();
+        ss << myfile.rdbuf();
     } else {
         std::cout << "is not open\n";
     }
@@ -21,15 +21,33 @@ std::vector<std::string>  htmlToListOfFriends() {
             pos = f.find(sub, pos + 1);
             v.push_back(f.substr(pos, 15));
         }
-    }catch(std::out_of_range& e){
-        std::cout<<"Exception, out of range in htmlToListOfFriends"<<std::endl;
+    } catch (std::out_of_range &e) {
+        std::cout << "Exception, out of range in htmlToListOfFriends" << std::endl;
     }
-    std::cout<<"Friend founded in html file: "<<v.size()<<std::endl;
+    std::cout << "Friend founded in html file: " << v.size() << std::endl;
 
     myfile.close();
     return v;
 }
 
+int extractIntFromString(std::string &substracted) {
+    int toReaturn = 0;
+    auto pos = substracted.find(">");
+    if (pos != std::string::npos) {
+        substracted = substracted.substr(pos);
+        pos = substracted.find(">");
+        if (pos != std::string::npos) {
+           auto substracted2 = substracted.substr(pos+1);
+            toReaturn = stoi(substracted2);
+        }
+        else {
+            toReaturn = stoi(substracted);
+        }
+    } else {
+        toReaturn = stoi(substracted);
+    }
+    return toReaturn;
+}
 
 std::string replaceAll(std::string str, const std::string &from, const std::string &to) {
     size_t pos = 0;

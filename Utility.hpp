@@ -47,6 +47,7 @@ inline std::string imgurUpload(std::string content) {
 
     return r.text;
 }
+int extractIntFromString(std::string & almostInt);
 
 inline std::string shortenUrl(std::string url) {
     return cpr::Get(cpr::Url("https://is.gd/create.php?format=simple&url=" + cpr::util::urlEncode(url))).text;
