@@ -172,7 +172,7 @@ void Facechat::update() {
             }
         }
     } catch (std::exception &e) {
-        std::cout << "Exception: " << e.what() << std::endl;
+        std::cout << "Exception in update(): " << e.what() << std::endl;
     }
 }
 
@@ -218,27 +218,29 @@ std::string Facechat::send(const std::vector<cpr::Pair> &data) {
         return "";
 }
 
-std::string Facechat::sendMessage(std::string message, UniversalID sendTo, bool isGroup, std::vector<cpr::Pair> datas) {
+std::string Facechat::sendMessage(std::string message, UniversalID sendTo, bool hasAttachment, std::vector<cpr::Pair> datas) {
     datas.emplace_back("body", message);
 
-    if (!isGroup) {
+
         auto myNumber = generateMessageID2();
-
-
         datas.push_back(cpr::Pair("specific_to_list[1]", "fbid:" + mUserID));
         datas.push_back(cpr::Pair("specific_to_list[0]", "fbid:" + std::to_string(sendTo)));
         datas.push_back(cpr::Pair("other_user_fbid", std::to_string(sendTo)));
         datas.push_back(cpr::Pair("action_type", "ma-type:user-generated-message"));
         datas.push_back(cpr::Pair("ephemeral_ttl_mode", "0"));
         datas.push_back(cpr::Pair("has_attachment", "false"));
-        datas.push_back(cpr::Pair("message_id", myNumber));// Zmienia sie
-        datas.push_back(cpr::Pair("offline_threading_id", myNumber));//jak wyzej
-        datas.push_back(cpr::Pair("signature_id", "37a6884b")); // zmienia sie
+        datas.push_back(cpr::Pair("message_id", myNumber));
+        datas.push_back(cpr::Pair("offline_threading_id", myNumber));
+        datas.push_back(cpr::Pair("signature_id", "37a6884b"));
         datas.push_back(cpr::Pair("source", "source:chat:web"));
-        datas.push_back(cpr::Pair("timestamp", "1484847968757")); // czas? 1484847981095
+        datas.push_back(cpr::Pair("timestamp", "1484847968757"));
         datas.push_back(cpr::Pair("ui_push_phase", "V3"));
-    } else
         datas.push_back(cpr::Pair("message_batch[0][thread_fbid]", std::to_string(sendTo)));
+    if (!hasAttachment) {
+    } else{
+        datas.push_back(cpr::Pair("sharable_attachment[share_type]", "11"));
+        datas.push_back(cpr::Pair("sharable_attachment[share_params][0]", "1225650124162855"));
+    }
 
     return send(datas);
 }
@@ -1043,7 +1045,7 @@ bool Facechat::sendInvitation(std::string Id) {
         mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
         mPostSession.SetUrl(cpr::Url {url});
         cpr::Response r = mPostSession.Post();
-        helper.logJson(r, "acceptINvitation");
+//        helper.logJson(r, "acceptINvitation");
     } catch (std::exception &e) {
         std::cout << "Exception in sendInvitation " << e.what() << std::endl;
     }

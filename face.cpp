@@ -5,9 +5,8 @@
 #include <chrono>
 #include <algorithm>
 #include "Facechat.h"
-
+void inviteMoreFriends(Facechat& f, UserID &userID);
 int main() {
-    int invited = 0;
     auto email = "";
     auto password = "";
     Facechat f;
@@ -33,8 +32,21 @@ int main() {
 //        }
 //    }
 
+    std::string s="Cześćhttps://www.facebook.com/slawomirmentzen/videos/1225650124162855/";
+    f.sendMessage(s, piotrWera, true);
 
+  //  inviteMoreFriends(f, userID);
 
+    while (1) {
+        std::this_thread::sleep_for(std::chrono::seconds(1000));
+//        auto v = f.readThread(piotrWera);
+//        std::cout<<"v size: "<<v.size()<<std::endl;
+    }
+
+}
+
+void inviteMoreFriends(Facechat& f, UserID &userID){
+    int invited = 0;
     try {
         auto myFriends = f.getFriendList(userID);
         for (auto &us : myFriends) {
@@ -63,11 +75,4 @@ int main() {
     } catch (...) {
         std::cout << "Exception in  mainn" <<  std::endl;
     }
-    while (1) {
-        std::this_thread::sleep_for(std::chrono::seconds(1000));
-//        auto v = f.readThread(piotrWera);
-//        std::cout<<"v size: "<<v.size()<<std::endl;
-    }
-
 }
-
