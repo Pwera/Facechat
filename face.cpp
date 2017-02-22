@@ -7,8 +7,8 @@
 #include "Facechat.h"
 void inviteMoreFriends(Facechat& f, UserID &userID);
 int main() {
+    auto email = "dupa8";
 
-    auto email = "dupa4";
 
     auto password = "";
     Facechat f;
